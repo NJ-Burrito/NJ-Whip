@@ -43,6 +43,7 @@ pub const WM_RELOAD: u32 = WM_APP + 1; // config.toml changed: apply now
 pub const WM_RESET: u32 = WM_APP + 2; // type the Reset message into the last window
 pub const WM_TEST: u32 = WM_APP + 3; // play the current whip's crack (sound + effect), no typing
 pub const WM_QUIT_ENGINE: u32 = WM_APP + 4;
+pub const WM_SOUND: u32 = WM_APP + 5; // play the current whip's sound only (a whip was picked)
 
 /// The engine thread's id (0 until it runs) and the app-wide "really quit" flag.
 pub static ENGINE_TID: AtomicU32 = AtomicU32::new(0);
@@ -163,6 +164,8 @@ struct App {
     last_frame: Instant,
     acc: f32,
     quit: bool,
+    /// The tray menu's two entries (their words follow the window's language).
+    menu: [MenuItem; 2],
     open_id: MenuId,
     quit_id: MenuId,
     tray: TrayIcon,
@@ -219,11 +222,21 @@ impl App {
             quit: false,
             open_id: open.id().clone(),
             quit_id: quit.id().clone(),
+            menu: [open, quit],
             tray,
         };
         // ON = the tool is live (hotkeys, cracks); the whip only appears with the show/hide hotkey.
         app.sync_hotkeys();
+        app.sync_menu();
         Ok(app)
+    }
+
+    /// The tray menu in the window's language (Windows joins and orders the Arabic itself).
+    fn sync_menu(&self) {
+        let words = crate::lang::Words::new(self.cfg.lang);
+        for (item, en) in self.menu.iter().zip(["Open NJ-Whip", "Quit"]) {
+            item.set_text(words.text(en, &[]));
+        }
     }
 
     /// The hotkeys follow ON/OFF, and hotkeys.txt always holds the current problems (none while OFF).
@@ -283,6 +296,7 @@ impl App {
             }
         };
         let old = std::mem::replace(&mut self.cfg, cfg);
+        self.sync_menu();
         self.sound.set_volume(self.cfg.volume, self.cfg.sfx_volume);
         self.sync_hotkeys();
         if !self.cfg.rage {
@@ -458,8 +472,12 @@ impl App {
             WM_RESET => self.type_reset(),
             WM_TEST => {
                 let def = whips::def(self.cfg.whip);
-                self.sound.crack(def.cracks, def.sounds);
+                self.sound.preview(def.cracks, def.sounds);
                 self.start_burst();
+            }
+            WM_SOUND => {
+                let def = whips::def(self.cfg.whip);
+                self.sound.preview(def.cracks, def.sounds);
             }
             WM_QUIT_ENGINE => self.quit = true,
             _ => {}
@@ -562,6 +580,10 @@ impl App {
             if self.shown.len() != pts.len() || pts.iter().zip(&self.shown).any(|(a, b)| (a.0 - b.0).hypot(a.1 - b.1) > SHOW_MOVE) {
                 self.shown.clone_from(pts);
             }
+        }
+        match (def.trail, &self.whip) {
+            (Some(rgb), Some(whip)) if !whip.dropping => self.fx.trail(*whip.rope.pts.last().expect("a rope has points"), rgb),
+            _ => self.fx.trail_end(),
         }
         let mouse_still = mouse == self.mouse_prev;
         self.mouse_prev = mouse;

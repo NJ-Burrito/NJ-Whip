@@ -1,0 +1,25 @@
+[package]
+name = "nj-whip-web"
+version = "0.4.0"
+edition = "2021"
+description = "The NJ-Whip engine (whips, physics, crack detection, effects, heat) compiled to WebAssembly for the website."
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+# The website build is a crate of its own: not a member of the app, its own target folder.
+[workspace]
+
+[dependencies]
+fastrand = "2"
+serde = { version = "1", features = ["derive"] }
+tiny-skia = { version = "0.12", default-features = false, features = ["std", "simd"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

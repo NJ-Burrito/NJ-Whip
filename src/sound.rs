@@ -1,33 +1,19 @@
-//! Sounds embedded in the exe: each whip's crack clips (one at random per crack; the five
-//! leather cracks unless the whip has its own) plus one voice or effect clip per whip type,
-//! played on top of the crack.
+//! Sounds embedded in the exe: each whip's own crack (one of its clips at random per crack; the
+//! Classic whip has the five leather cracks) plus, for some whips, a voice or effect clip played
+//! on top of the crack.
 
 use rodio::buffer::SamplesBuffer;
-use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player};
+use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player, Source};
 use std::io::Cursor;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::time::{Duration, Instant};
 
-/// The generic leather cracks: the crack of every whip without its own.
-pub const LEATHER: [&[u8]; 5] = [
-    include_bytes!("../assets/sounds/crack-1.mp3"),
-    include_bytes!("../assets/sounds/crack-2.mp3"),
-    include_bytes!("../assets/sounds/crack-3.mp3"),
-    include_bytes!("../assets/sounds/crack-4.mp3"),
-    include_bytes!("../assets/sounds/crack-5.mp3"),
-];
-
-/// The whips' own clips (a whip lists its clips in `WhipDef::sounds`).
-pub const NEON: &[u8] = include_bytes!("../assets/sounds/neon.mp3");
-pub const ELEPHANT: &[u8] = include_bytes!("../assets/sounds/elephant.mp3");
-pub const COWBOY: &[u8] = include_bytes!("../assets/sounds/cowboy.mp3");
-pub const CHEER: &[u8] = include_bytes!("../assets/sounds/cheer.mp3");
-pub const DRILL: &[u8] = include_bytes!("../assets/sounds/drill.mp3");
-pub const GONG: &[u8] = include_bytes!("../assets/sounds/gong.mp3");
-pub const NINJA: &[u8] = include_bytes!("../assets/sounds/ninja.mp3");
-pub const PIRATE: &[u8] = include_bytes!("../assets/sounds/pirate.mp3");
-/// A whip's own crack (listed in `WhipDef::cracks`), in place of the leather ones.
-pub const VINE_CRACK: &[u8] = include_bytes!("../assets/sounds/vine-crack.mp3");
+macro_rules! clip {
+    ($name:ident, $file:literal) => {
+        pub const $name: &[u8] = include_bytes!(concat!("../assets/sounds/", $file));
+    };
+}
+include!("clips.rs");
 
 /// The output stream is closed this long after the last sound (an open WASAPI stream keeps the
 /// audio thread awake and can block idle sleep). The longest crack sound is well under this.
@@ -67,9 +53,26 @@ fn whoosh_volume(volume: f32, power: f32) -> f32 {
     volume * (0.2 + 0.5 * power.clamp(0.0, 1.0))
 }
 
+/// A whip's own clips (a trumpet, a "yeehaw") would pile up over a streak of cracks: after
+/// they play they rest until they have ended and this long has passed. Cracks in between are
+/// cracks only.
+const EXTRAS_REST: Duration = Duration::from_secs(1);
+
+fn extras_due(rest_until: Option<Instant>, now: Instant) -> bool {
+    rest_until.is_none_or(|t| now >= t)
+}
+
+/// How long a clip plays.
+fn clip_length(bytes: &'static [u8]) -> Duration {
+    let Ok(src) = Decoder::try_from(Cursor::new(bytes)) else { return Duration::ZERO };
+    let per_second = src.sample_rate().get() as f32 * src.channels().get() as f32;
+    Duration::from_secs_f32(src.count() as f32 / per_second)
+}
+
 enum Cmd {
-    /// The crack choices (one is played at random) and the extras (all played).
-    Crack(&'static [&'static [u8]], &'static [&'static [u8]]),
+    /// The crack choices (one is played at random), the extras (all played, unless they are
+    /// resting) and whether the extras play even while resting (a whip was picked or tested).
+    Crack(&'static [&'static [u8]], &'static [&'static [u8]], bool),
     Whoosh(f32, f32),
     Volume(f32, f32),
 }
@@ -86,7 +89,7 @@ impl Sound {
         // If the thread cannot start, `rx` is dropped and every send fails silently: no sound.
         let _ = std::thread::Builder::new()
             .name("nj-whip-audio".into())
-            .spawn(move || Audio { sink: None, last_used: None, volume, sfx_volume }.run(rx));
+            .spawn(move || Audio { sink: None, last_used: None, volume, sfx_volume, extras_rest: None }.run(rx));
         Sound { tx }
     }
 
@@ -94,9 +97,15 @@ impl Sound {
         let _ = self.tx.send(Cmd::Volume(volume, sfx_volume));
     }
 
-    /// One random clip of `cracks`, plus the whip's own clips (`extras`, if any) on top.
+    /// One random clip of `cracks`, plus the whip's own clips (`extras`, if any) on top unless
+    /// they are resting (see `EXTRAS_REST`).
     pub fn crack(&self, cracks: &'static [&'static [u8]], extras: &'static [&'static [u8]]) {
-        let _ = self.tx.send(Cmd::Crack(cracks, extras));
+        let _ = self.tx.send(Cmd::Crack(cracks, extras, false));
+    }
+
+    /// A whip's whole sound, asked for by hand (picked or tested in the window): always in full.
+    pub fn preview(&self, cracks: &'static [&'static [u8]], extras: &'static [&'static [u8]]) {
+        let _ = self.tx.send(Cmd::Crack(cracks, extras, true));
     }
 
     /// The whip cutting the air before a crack. `power` 0..1 = how hard the swing is;
@@ -113,6 +122,8 @@ struct Audio {
     last_used: Option<Instant>,
     volume: f32,
     sfx_volume: f32,
+    /// The whips' own clips play again from this moment on.
+    extras_rest: Option<Instant>,
 }
 
 impl Audio {
@@ -134,12 +145,17 @@ impl Audio {
     fn handle(&mut self, cmd: Cmd) {
         match cmd {
             Cmd::Volume(v, sfx) => (self.volume, self.sfx_volume) = (v, sfx),
-            Cmd::Crack(cracks, extras) => {
+            Cmd::Crack(cracks, extras, always) => {
                 if !cracks.is_empty() {
                     self.play_bytes(cracks[fastrand::usize(..cracks.len())], self.volume);
                 }
-                for bytes in extras {
-                    self.play_bytes(bytes, self.sfx_volume);
+                let now = Instant::now();
+                if !extras.is_empty() && (always || extras_due(self.extras_rest, now)) {
+                    for bytes in extras {
+                        self.play_bytes(bytes, self.sfx_volume);
+                    }
+                    let longest = extras.iter().map(|b| clip_length(b)).max().unwrap_or_default();
+                    self.extras_rest = Some(now + longest + EXTRAS_REST);
                 }
             }
             Cmd::Whoosh(power, weight) => {

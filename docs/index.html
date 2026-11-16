@@ -2,14 +2,14 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-bO9ylY4plr76WmPMtJxA9251nkxg8qfLmNE6kxeeOA4='; style-src 'self'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-BNe9xyjX37egz9CaQS3jnmqWFnDmPFDitVrpSBoKwlk=' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0A1024" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#EEF6FB" media="(prefers-color-scheme: light)">
-<title>NJ-Whip by Nader Alzghoul: a free on-screen whip for Claude Code</title>
-<meta name="description" content="NJ-Whip is a free, open-source on-screen whip for Claude Code on Windows. Crack it and it types one short instruction. By Nader Alzghoul (NJ-Burrito).">
+<title>NJ-Whip by Nader Alzghoul: steer Claude Code with an on-screen whip</title>
+<meta name="description" content="NJ-Whip is a free, open-source on-screen whip for Claude Code on Windows. Crack it and it types one short instruction: take the shortest path, check the work, be careful, stay calm or stay on the task. By Nader Alzghoul (NJ-Burrito).">
 <link rel="canonical" href="https://nj-burrito.github.io/NJ-Whip/">
 <link rel="alternate" hreflang="en" href="https://nj-burrito.github.io/NJ-Whip/">
 <link rel="alternate" hreflang="ar" href="https://nj-burrito.github.io/NJ-Whip/ar/">
@@ -20,20 +20,20 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="NJ-Whip">
 <meta property="og:url" content="https://nj-burrito.github.io/NJ-Whip/">
-<meta property="og:title" content="NJ-Whip: a free on-screen whip for Claude Code">
-<meta property="og:description" content="Press Ctrl+Alt+Q and the whip is on your mouse. Crack it and it types one short instruction for Claude Code. Free, MIT, Windows.">
+<meta property="og:title" content="NJ-Whip: steer Claude Code with a crack of the whip">
+<meta property="og:description" content="A free on-screen whip for Claude Code on Windows. Swing it, it cracks, and it types one short, real instruction: shortest path, check the work, stay on the task. MIT, one small exe.">
 <meta property="og:image" content="https://nj-burrito.github.io/NJ-Whip/assets/og.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="The Neon whip mid-swing on a dark screen, a full heat meter, the screen edges glowing blue and the combo label ZAP ×2.">
+<meta property="og:image:alt" content="NJ-Whip: the Classic whip cracks on a dark screen and a prompt box shows the instruction it types to Claude Code.">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="ar_AR">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="NJ-Whip: a free on-screen whip for Claude Code">
-<meta name="twitter:description" content="Press Ctrl+Alt+Q and the whip is on your mouse. Crack it and it types one short instruction for Claude Code. Free, MIT, Windows.">
+<meta name="twitter:title" content="NJ-Whip: steer Claude Code with a crack of the whip">
+<meta name="twitter:description" content="A free on-screen whip for Claude Code on Windows. Swing it, it cracks, and it types one short, real instruction: shortest path, check the work, stay on the task. MIT, one small exe.">
 <meta name="twitter:image" content="https://nj-burrito.github.io/NJ-Whip/assets/og.png">
-<meta name="twitter:image:alt" content="The Neon whip mid-swing on a dark screen, a full heat meter, the screen edges glowing blue and the combo label ZAP ×2.">
+<meta name="twitter:image:alt" content="NJ-Whip: the Classic whip cracks on a dark screen and a prompt box shows the instruction it types to Claude Code.">
 <link rel="icon" type="image/png" href="assets/logo.png">
 <link rel="apple-touch-icon" href="assets/logo.png">
 <link rel="sitemap" type="application/xml" href="sitemap.xml">
@@ -45,7 +45,13 @@
 {"@context":"https://schema.org","@graph":[
 {"@type":"WebSite","@id":"https://nj-burrito.github.io/NJ-Whip/#website","name":"NJ-Whip","url":"https://nj-burrito.github.io/NJ-Whip/","inLanguage":["en","ar"],"publisher":{"@id":"https://nj-burrito.github.io/#person"}},
 {"@type":"Person","@id":"https://nj-burrito.github.io/#person","name":"Nader Alzghoul","alternateName":["NJ-Burrito","نادر الزغول"],"url":"https://nj-burrito.github.io/"},
-{"@type":"SoftwareApplication","@id":"https://nj-burrito.github.io/NJ-Whip/#app","name":"NJ-Whip","description":"A free, open-source on-screen whip for Claude Code on Windows. Crack it by swinging, by clicking or with a hotkey, and it types one short instruction into the window you were in last.","applicationCategory":"DeveloperApplication","operatingSystem":"Windows 10 version 2004 or later","softwareVersion":"0.3.0","url":"https://nj-burrito.github.io/NJ-Whip/","downloadUrl":"https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe","codeRepository":"https://github.com/NJ-Burrito/NJ-Whip","sameAs":["https://github.com/NJ-Burrito/NJ-Whip"],"license":"https://opensource.org/licenses/MIT","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"inLanguage":"en","image":"https://nj-burrito.github.io/NJ-Whip/assets/og.png","screenshot":"https://nj-burrito.github.io/NJ-Whip/assets/settings.png","author":{"@id":"https://nj-burrito.github.io/#person"}}
+{"@type":"SoftwareApplication","@id":"https://nj-burrito.github.io/NJ-Whip/#app","name":"NJ-Whip","description":"A free, open-source on-screen whip for Claude Code on Windows. Crack it by swinging, by clicking or with a hotkey, and it types one short instruction into the window you were in last: faster, harder, careful, happier or focus.","applicationCategory":"DeveloperApplication","operatingSystem":"Windows 10 version 2004 or later, Windows 11","softwareVersion":"0.4.0","fileSize":"6.7 MB","featureList":["15 whips, each with its own look, weight, crack effect and lines","Five directions: Faster, Harder, Careful, Happier, Focus","Six instruction packs and your own lines","Heat meter, edge glow and combo label","English and Arabic interface","Check for updates from the About tab, only when you press it"],"url":"https://nj-burrito.github.io/NJ-Whip/","downloadUrl":"https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe","codeRepository":"https://github.com/NJ-Burrito/NJ-Whip","sameAs":["https://github.com/NJ-Burrito/NJ-Whip"],"license":"https://opensource.org/licenses/MIT","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"inLanguage":["en","ar"],"image":"https://nj-burrito.github.io/NJ-Whip/assets/og.png","screenshot":"https://nj-burrito.github.io/NJ-Whip/assets/settings.png","author":{"@id":"https://nj-burrito.github.io/#person"}},
+{"@type":"FAQPage","@id":"https://nj-burrito.github.io/NJ-Whip/#faq","inLanguage":"en","mainEntity":[
+{"@type":"Question","name":"Does NJ-Whip make Claude faster?","acceptedAnswer":{"@type":"Answer","text":"It sends an instruction that asks for the smallest change that works and no detours. The wording follows published guidance on steering Claude Code. Its effect has not been measured on live sessions, so there is no speed figure to give."}},
+{"@type":"Question","name":"Does a crack interrupt Claude?","acceptedAnswer":{"@type":"Answer","text":"Faster, Harder and Happier lines are queued without Esc, so nothing Claude is doing is cancelled. Careful and Focus lines are sent after Esc, so Claude stops before its next step."}},
+{"@type":"Question","name":"How does NJ-Whip update?","acceptedAnswer":{"@type":"Answer","text":"Open the About tab and press Check for updates. NJ-Whip asks GitHub for the latest release only when you press that button, and it installs the update only when you confirm."}},
+{"@type":"Question","name":"Is NJ-Whip made by Anthropic?","acceptedAnswer":{"@type":"Answer","text":"No. It is an independent project by Nader Alzghoul, not affiliated with Anthropic."}}
+]}
 ]}
 </script>
 </head>
@@ -56,10 +62,12 @@
   <div class="wrap">
     <a class="brand" href="./" aria-label="NJ-Whip home"><img src="assets/logo.png" alt="" width="256" height="256">NJ-Whip</a>
     <nav aria-label="Page">
-      <a href="#how">How it works</a>
+      <a href="#work">Your work</a>
+      <a href="#room">Try it</a>
       <a href="#whips">Whips</a>
-      <a href="#messages">Messages</a>
-      <a href="#notes">Honest notes</a>
+      <a href="#heat">Heat</a>
+      <a href="#light">Light</a>
+      <a href="#download">Get it</a>
       <a class="lang" href="ar/" hreflang="ar" lang="ar">العربية</a>
     </nav>
   </div>
@@ -70,59 +78,196 @@
 <section class="hero">
   <div class="wrap">
     <div>
-      <h1>An <span class="nw">on-screen</span> whip for <span class="nw">Claude Code</span></h1>
-      <p class="lede">Press <span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd></span> and the whip is on your mouse. Crack it, and it types one short instruction into the window you were in last.</p>
+      <h1>Steer <span class="nw">Claude Code</span> with a crack of the whip</h1>
+      <p class="lede">NJ-Whip puts a whip on your mouse. Swing it and it cracks, then types one short, real instruction to Claude: take the shortest path, check the work, stay on the task.</p>
       <div class="actions">
         <a class="btn" href="https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>Download NJ-Whip.exe</a>
-        <a class="btn quiet" href="https://github.com/NJ-Burrito/NJ-Whip">Source code</a>
+        <a class="btn quiet" href="#room">Try it in your browser</a>
       </div>
-      <p class="fine">Free and open source under the MIT licence. One small exe, about 6.5 MB, no installer. For Windows 10 2004 or later. Version 0.3.0.</p>
+      <p class="fine">Free and open source under the MIT licence. One exe, about 6.7 MB, no installer, no account. For Windows 10 (2004 or later) and Windows 11. Version 0.4.0.</p>
     </div>
     <figure class="screen">
-      <video autoplay muted loop playsinline controls preload="metadata" width="1280" height="720" aria-label="NJ-Whip demo: a whip swings and cracks on a dark screen, the heat meter fills, the screen edges glow and a combo label appears.">
-        <source src="assets/demo.mp4" type="video/mp4">
-        <a href="assets/demo.gif">Watch the demo as a GIF</a>
-      </video>
-      <figcaption>Four whips in turn: Classic, Neon, Cheerleader and Storm. The clip has no sound.</figcaption>
+      <picture>
+        <source srcset="assets/hero-still.png" media="(prefers-reduced-motion: reduce)">
+        <img src="assets/hero.gif" alt="NJ-Whip in four beats. The whip appears on the mouse. A swing cracks it. The instruction lands in a Claude Code prompt: smallest change that works, then stop and report. Then the next whip." width="960" height="480">
+      </picture>
+      <figcaption>Real whips from the app's own engine. The picture has no sound.</figcaption>
     </figure>
   </div>
 </section>
 
-<section id="how">
+<section id="work">
   <div class="wrap">
     <div class="head">
-      <h2>How it works</h2>
+      <h2>What it does for your work</h2>
+      <p>A crack is a short message to Claude.</p>
+      <p>Each of the 15 whips sends a real instruction in one of five directions.</p>
     </div>
     <ol class="steps">
       <li>
         <h3>Call it</h3>
-        <p>Press <span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd></span> and the whip is on your mouse.</p>
+        <p>Press <span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd></span> and the whip is on your mouse. Press again and it drops away.</p>
       </li>
       <li>
         <h3>Crack it</h3>
-        <p>Swing it: wind up one way, then snap back the other. A lazy back-and-forth only whooshes, and each snap cracks once. You can also click, or press <span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd></span>.</p>
+        <p>Wind up one way, then snap back the other. You can also click, or press <span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd></span>.</p>
       </li>
       <li>
         <h3>It types for you</h3>
-        <p>A crack plays the whip's sound and effect. Then it types one short message into the window you were in last: the whip's fun line plus a real instruction, then <span class="keys"><kbd>Enter</kbd></span>.</p>
+        <p>One message goes into the window you were in last: the whip's fun line, a real instruction, then <span class="keys"><kbd>Enter</kbd></span>.</p>
       </li>
     </ol>
+
+    <div class="dirs">
+      <h3>The five directions</h3>
+      <table>
+        <thead>
+          <tr><th scope="col">Direction</th><th scope="col">It asks Claude to</th><th scope="col">What it types, and how it is sent</th><th scope="col">Whips</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Faster</th>
+            <td data-h="It asks Claude to">Make the smallest change that works, with no detours, then stop and report.</td>
+            <td data-h="What it types, and how it is sent"><q class="line">Smallest change that works; no extra files, docs or refactors. When it's done and checked, stop and report.</q><span class="how">Queued, no Esc</span></td>
+            <td class="who" data-h="Whips">Classic, Cowboy, Pirate, Penguin</td>
+          </tr>
+          <tr>
+            <th scope="row">Harder</th>
+            <td data-h="It asks Claude to">Run a real check before it says done, and show the output.</td>
+            <td data-h="What it types, and how it is sent"><q class="line">Before you say done, run a check that exercises the change and show the output; say what you couldn't run.</q><span class="how">Queued, no Esc</span></td>
+            <td class="who" data-h="Whips">Elephant, Drill Sergeant, Storm</td>
+          </tr>
+          <tr>
+            <th scope="row">Careful</th>
+            <td data-h="It asks Claude to">Read each file and its callers before it changes anything.</td>
+            <td data-h="What it types, and how it is sent"><q class="line">Continue, carefully: read each file and its callers before you change it, state the change in two lines, then proceed.</q><span class="how esc">After Esc</span></td>
+            <td class="who" data-h="Whips">Zen, Chef, Vine</td>
+          </tr>
+          <tr>
+            <th scope="row">Happier</th>
+            <td data-h="It asks Claude to">Work at a calm pace and say plainly when something fails.</td>
+            <td data-h="What it types, and how it is sent"><q class="line">Good progress, no rush. If something fails or can't be done, say so plainly with the output, then carry on.</q><span class="how">Queued, no Esc</span></td>
+            <td class="who" data-h="Whips">Cheerleader, Sauce</td>
+          </tr>
+          <tr>
+            <th scope="row">Focus</th>
+            <td data-h="It asks Claude to">Stay on the task you asked for and keep side ideas for the end.</td>
+            <td data-h="What it types, and how it is sent"><q class="line">Continue only the task I asked for. When it's done and checked, stop and report; list ideas at the end.</q><span class="how esc">After Esc</span></td>
+            <td class="who" data-h="Whips">Neon, Ninja, Wizard</td>
+          </tr>
+        </tbody>
+      </table>
+      <dl class="sent">
+        <div>
+          <dt>Queued, no Esc</dt>
+          <dd>The text and <span class="keys"><kbd>Enter</kbd></span> are sent. Claude reads the line at its next step, and nothing it is doing is cancelled.</dd>
+        </div>
+        <div>
+          <dt>After Esc</dt>
+          <dd><span class="keys"><kbd>Esc</kbd></span> is pressed first, so Claude stops before its next step. These lines begin with "Continue".</dd>
+        </div>
+      </dl>
+      <ul class="facts">
+        <li><p>The lines above are the Plain pack in its Light wording. There are six packs, and the window shows them all.</p></li>
+        <li><p>The wording follows published guidance on steering Claude Code.</p></li>
+        <li><p>It has not been measured on live sessions, so this page gives no speed figure.</p></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="room">
+  <div class="wrap">
+    <div class="head">
+      <h2>Try it here</h2>
+      <p>Move your pointer over the screen below: the whip is in your hand.</p>
+      <p>Wind up one way, snap back the other, and it cracks. A click cracks too. On a phone, drag sideways to swing and tap to crack.</p>
+      <p>Every crack leaves the whip's landing mark, and it fades in 3 seconds: a puddle for Sauce, a bullet hole for Drill Sergeant, a cut across the screen for Ninja. Sauce also leaves a trail that fades in 3 seconds.</p>
+      <p>This is the app's own engine, compiled for the browser: the same whips, the same physics, the same crack detection.</p>
+    </div>
+    <div class="screen room" id="room-stage" data-stage data-intents="Faster|Harder|Careful|Happier|Focus" data-queued="queued, no Esc" data-esc="sent after Esc">
+      <div class="stagebox" role="img" aria-label="The room: a live whip that follows your pointer on a dark screen, with the heat meter at the top.">
+        <canvas aria-hidden="true"></canvas>
+        <div class="shout" aria-hidden="true"></div>
+        <p class="hint" data-live>Move here. Wind up one way, then snap back.</p>
+      </div>
+      <p class="fallback">The live room did not start in this browser, so this is a still picture of it: the Sauce whip mid-swing with its trail.</p>
+      <div class="desk" data-live>
+        <div>
+          <fieldset class="chips">
+            <legend>Pick a whip</legend>
+            <label class="chip w-classic"><input type="radio" name="room-whip" checked><span>Classic</span></label>
+            <label class="chip w-neon"><input type="radio" name="room-whip"><span>Neon</span></label>
+            <label class="chip w-elephant"><input type="radio" name="room-whip"><span>Elephant</span></label>
+            <label class="chip w-cowboy"><input type="radio" name="room-whip"><span>Cowboy</span></label>
+            <label class="chip w-cheerleader"><input type="radio" name="room-whip"><span>Cheerleader</span></label>
+            <label class="chip w-sauce"><input type="radio" name="room-whip"><span>Sauce</span></label>
+            <label class="chip w-drill"><input type="radio" name="room-whip"><span>Drill Sergeant</span></label>
+            <label class="chip w-zen"><input type="radio" name="room-whip"><span>Zen</span></label>
+            <label class="chip w-ninja"><input type="radio" name="room-whip"><span>Ninja</span></label>
+            <label class="chip w-pirate"><input type="radio" name="room-whip"><span>Pirate</span></label>
+            <label class="chip w-chef"><input type="radio" name="room-whip"><span>Chef</span></label>
+            <label class="chip w-wizard"><input type="radio" name="room-whip"><span>Wizard</span></label>
+            <label class="chip w-vine"><input type="radio" name="room-whip"><span>Vine</span></label>
+            <label class="chip w-penguin"><input type="radio" name="room-whip"><span>Penguin</span></label>
+            <label class="chip w-storm"><input type="radio" name="room-whip"><span>Storm</span></label>
+          </fieldset>
+          <div class="bar">
+            <button type="button" class="tool go" data-crack>Crack it</button>
+            <button type="button" class="tool" data-sound aria-pressed="false" data-on="Sound on" data-off="Sound off"><span class="ico" aria-hidden="true"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path d="M18 6.5a7.6 7.6 0 0 1 0 11"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5z"/><path d="m16 9.5 5 5"/><path d="m21 9.5-5 5"/></svg></span><span data-label>Sound off</span></button>
+            <label>Pack
+              <select class="tool" aria-label="Instruction pack">
+                <option>Plain</option>
+                <option>nj-kit</option>
+                <option>Surgical</option>
+                <option>Quiet</option>
+                <option>Superpowers</option>
+                <option>Plan-first</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="prompt">
+          <header><span>Claude Code prompt (a mock)</span><span class="tag" data-tag></span></header>
+          <p class="typed" data-typed aria-hidden="true"></p>
+          <footer>Crack the whip and the message appears here. Nothing is sent from this page. On your PC, NJ-Whip types this line into the window you were in last, then presses Enter.</footer>
+          <p class="vh" data-say aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
 <section id="whips">
   <div class="wrap">
     <div class="head">
-      <h2>15 whips, five directions</h2>
-      <p>Each whip steers Claude in one of five directions: Faster, Harder, Careful, Happier or Focus.</p>
-      <p>Each whip has its own look, tip, weight, crack effect and lines. A heavy whip trails your hand. A light one answers at once.</p>
-      <p>Any whip can carry your own picture as its tip. The picture is stored only on your computer.</p>
+      <h2>15 whips, each with its own character</h2>
+      <p>Hover a whip and it leans toward your pointer. Press it and it cracks with its own sound.</p>
+      <p>Each whip has its own look, tip, weight, crack effect, lines and combo shout. A heavy whip trails your hand. A light one answers at once.</p>
+      <p>The Sauce whip leaves a sauce trail that fades over 3 seconds. Pick Sauce in <a href="#room">the room</a> to see it.</p>
     </div>
-    <figure class="screen gallery">
-      <div class="scroll" dir="ltr" tabindex="0" role="region" aria-label="All 15 whips">
-        <img src="assets/gallery.png" alt="All 15 whips, each in its own colours: Classic, Neon, Elephant, Cowboy, Cheerleader, Sauce, Drill Sergeant, Zen, Ninja, Pirate, Chef, Wizard, Vine, Penguin and Storm." width="2000" height="810" loading="lazy">
-      </div>
-    </figure>
+    <ul class="rack" data-stage>
+      <li><button type="button" class="whip w-classic"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Classic <small>CRACK</small></span><span class="dir">Faster · normal weight</span><span class="look">Navy plaited leather, ice-blue braid, silver fittings.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-neon"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Neon <small>ZAP</small></span><span class="dir">Focus · light</span><span class="look">A glowing tube with a clean light bead.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-elephant"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Elephant <small>STOMP</small></span><span class="dir">Harder · heaviest</span><span class="look">Heavy grey hide with a tufted tail tip.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-cowboy"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Cowboy <small>YEEHAW</small></span><span class="dir">Faster · a little heavy</span><span class="look">Tan rawhide braid, brass knob, a lasso swirl.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-cheerleader"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Cheerleader <small>RAH</small></span><span class="dir">Happier · light</span><span class="look">Pink-and-gold ribbon, pom-pom tip, confetti.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-sauce"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Sauce <small>YUM</small></span><span class="dir">Happier · heavy</span><span class="look">Glossy salsa with a hanging drop. Leaves a trail that fades in 3 seconds.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-drill"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Drill Sergeant <small>HUP</small></span><span class="dir">Harder · a little heavy</span><span class="look">Olive webbing, brass buckle, a stern "!".</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-zen"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Zen <small>OM</small></span><span class="dir">Careful · lightest</span><span class="look">Silk thread on bamboo, an ink ripple and a petal.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-ninja"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Ninja <small>SLICE</small></span><span class="dir">Focus · light</span><span class="look">Black cord, steel kunai tip, a clean slash.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-pirate"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Pirate <small>ARR</small></span><span class="dir">Faster · heavy</span><span class="look">Tarred hemp, cutlass hilt, sea spray.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-chef"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Chef <small>SIZZLE</small></span><span class="dir">Careful · normal weight</span><span class="look">Kitchen-towel lash, wooden spoon, steam.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-wizard"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Wizard <small>POOF</small></span><span class="dir">Focus · light</span><span class="look">A ribbon of starlight with a crystal bead.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-vine"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Vine <small>BLOOM</small></span><span class="dir">Careful · a little light</span><span class="look">A living vine whose bud blooms on a crack.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-penguin"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Penguin <small>HONK</small></span><span class="dir">Faster · a little heavy</span><span class="look">A clay penguin rides the tip.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+      <li><button type="button" class="whip w-storm"><span class="stagebox"><canvas width="480" height="320" aria-hidden="true"></canvas></span><span class="txt"><span class="name">Storm <small>BOOM</small></span><span class="dir">Harder · a little heavy</span><span class="look">A thundercloud tip and lightning.</span><span class="vh">Press to hear its crack.</span></span></button></li>
+    </ul>
+    <ul class="facts">
+      <li><p>Sound is off until you turn it on or press a whip.</p></li>
+      <li><p>A whip has its own crack sound where a licensed real recording was found. The others share five leather cracks.</p></li>
+      <li><p>Any whip can carry your own picture as its tip. The picture stays on your computer.</p></li>
+    </ul>
   </div>
 </section>
 
@@ -130,48 +275,63 @@
   <div class="wrap split">
     <div class="prose">
       <h2>Keep cracking and the screen warms up</h2>
-      <p>The heat meter fills in 4 cracks. It drains about a second after the last one.</p>
-      <p>At full heat, the screen edges glow softly in the whip's own colour and style. The glow is never red, and the screen never shakes.</p>
-      <p>A streak shows a combo label such as <bdi>STOMP ×3</bdi>.</p>
+      <ul class="facts">
+        <li><p><strong>Heat meter.</strong> It fills in 4 cracks and drains about a second after the last one.</p></li>
+        <li><p><strong>Full heat.</strong> The screen edges glow softly in the whip's own colour and style. The glow is never red, and the screen never shakes.</p></li>
+        <li><p><strong>Streaks.</strong> Crack again in time and a combo label pops up, such as <bdi>STOMP ×3</bdi>.</p></li>
+      </ul>
     </div>
-    <fieldset class="rack">
-      <legend>Pick a whip to see its glow</legend>
-      <div class="stage" dir="ltr" aria-hidden="true">
-        <div class="meter"><span></span><span></span><span></span><span></span></div>
-        <div class="combo"> ×3</div>
-        <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid meet" focusable="false">
-          <path class="lash" stroke-width="5" d="M232 300C290 236 360 292 430 250S520 196 548 150"/>
-          <path class="grip" stroke-width="13" d="M176 352 232 300"/>
-          <circle class="tip" cx="548" cy="150" r="9"/>
-          <circle class="tip" cx="172" cy="356" r="11"/>
-        </svg>
+    <div class="screen heat" id="heat-stage" data-stage>
+      <div class="stagebox" role="img" aria-label="The heat demo: the picked whip cracks on a beat, the meter at the top fills, the screen edges glow in the whip's colour and a combo label appears.">
+        <canvas aria-hidden="true"></canvas>
+        <div class="shout" aria-hidden="true"></div>
       </div>
-      <div class="chips" dir="ltr">
-        <label class="chip w-classic"><input type="radio" name="whip" value="classic" checked><span>Classic</span></label>
-        <label class="chip w-neon"><input type="radio" name="whip" value="neon"><span>Neon</span></label>
-        <label class="chip w-elephant"><input type="radio" name="whip" value="elephant"><span>Elephant</span></label>
-        <label class="chip w-cowboy"><input type="radio" name="whip" value="cowboy"><span>Cowboy</span></label>
-        <label class="chip w-cheerleader"><input type="radio" name="whip" value="cheerleader"><span>Cheerleader</span></label>
-        <label class="chip w-sauce"><input type="radio" name="whip" value="sauce"><span>Sauce</span></label>
-        <label class="chip w-drill"><input type="radio" name="whip" value="drill-sergeant"><span>Drill Sergeant</span></label>
-        <label class="chip w-zen"><input type="radio" name="whip" value="zen"><span>Zen</span></label>
-        <label class="chip w-ninja"><input type="radio" name="whip" value="ninja"><span>Ninja</span></label>
-        <label class="chip w-pirate"><input type="radio" name="whip" value="pirate"><span>Pirate</span></label>
-        <label class="chip w-chef"><input type="radio" name="whip" value="chef"><span>Chef</span></label>
-        <label class="chip w-wizard"><input type="radio" name="whip" value="wizard"><span>Wizard</span></label>
-        <label class="chip w-vine"><input type="radio" name="whip" value="vine"><span>Vine</span></label>
-        <label class="chip w-penguin"><input type="radio" name="whip" value="penguin"><span>Penguin</span></label>
-        <label class="chip w-storm"><input type="radio" name="whip" value="storm"><span>Storm</span></label>
+      <p class="fallback">The live demo did not start in this browser, so this is a still picture: the Neon whip at full heat, the edges glowing blue.</p>
+      <div class="desk" data-live>
+        <fieldset class="chips">
+          <legend>Pick a whip: the demo draws that whip, with its own glow</legend>
+          <label class="chip w-classic"><input type="radio" name="heat-whip" checked><span>Classic</span></label>
+          <label class="chip w-neon"><input type="radio" name="heat-whip"><span>Neon</span></label>
+          <label class="chip w-elephant"><input type="radio" name="heat-whip"><span>Elephant</span></label>
+          <label class="chip w-cowboy"><input type="radio" name="heat-whip"><span>Cowboy</span></label>
+          <label class="chip w-cheerleader"><input type="radio" name="heat-whip"><span>Cheerleader</span></label>
+          <label class="chip w-sauce"><input type="radio" name="heat-whip"><span>Sauce</span></label>
+          <label class="chip w-drill"><input type="radio" name="heat-whip"><span>Drill Sergeant</span></label>
+          <label class="chip w-zen"><input type="radio" name="heat-whip"><span>Zen</span></label>
+          <label class="chip w-ninja"><input type="radio" name="heat-whip"><span>Ninja</span></label>
+          <label class="chip w-pirate"><input type="radio" name="heat-whip"><span>Pirate</span></label>
+          <label class="chip w-chef"><input type="radio" name="heat-whip"><span>Chef</span></label>
+          <label class="chip w-wizard"><input type="radio" name="heat-whip"><span>Wizard</span></label>
+          <label class="chip w-vine"><input type="radio" name="heat-whip"><span>Vine</span></label>
+          <label class="chip w-penguin"><input type="radio" name="heat-whip"><span>Penguin</span></label>
+          <label class="chip w-storm"><input type="radio" name="heat-whip"><span>Storm</span></label>
+        </fieldset>
+        <div class="bar">
+          <button type="button" class="tool go" data-crack>Crack it yourself</button>
+        </div>
       </div>
-    </fieldset>
+    </div>
   </div>
 </section>
 
-<section id="messages">
-  <div class="wrap split narrow-media">
+<section id="window">
+  <div class="wrap split even">
     <div class="prose">
-      <h2>What a crack types</h2>
-      <p>Choose one of six instruction packs.</p>
+      <h2>One small window</h2>
+      <p>Everything is saved as you change it. The header and the footer stay in place while the content scrolls.</p>
+      <dl class="tabs">
+        <div><dt>Whip</dt><dd>Pick one of the 15 whips. Picking one plays its sound.</dd></div>
+        <div><dt>Message</dt><dd>Choose an instruction pack and add your own lines.</dd></div>
+        <div><dt>Hotkeys</dt><dd>Change the keys that call the whip and crack it.</dd></div>
+        <div><dt>Options</dt><dd>The heat meter, the swing crack, and Start with Windows.</dd></div>
+        <div><dt>About</dt><dd>The version, and <strong>Check for updates</strong>.</dd></div>
+      </dl>
+      <ul class="facts">
+        <li><p><strong>Arabic interface.</strong> The layout stays the same. The words switch to Arabic and read right to left.</p></li>
+        <li><p><strong>Update.</strong> NJ-Whip asks GitHub for the latest release only when you press Check for updates. It installs only when you confirm.</p></li>
+        <li><p><strong>Reset Claude.</strong> A button types "normal mode", then "Continue.".</p></li>
+      </ul>
+      <h3 class="vh">The six instruction packs</h3>
       <ul class="packs">
         <li>Plain</li>
         <li>nj-kit</li>
@@ -180,58 +340,47 @@
         <li>Superpowers</li>
         <li>Plan-first</li>
       </ul>
-      <dl class="rules">
-        <div>
-          <dt>Faster, Harder and Happier</dt>
-          <dd>These lines are queued without <span class="keys"><kbd>Esc</kbd></span>, so nothing Claude is doing is cancelled.</dd>
-        </div>
-        <div>
-          <dt>Careful and Focus</dt>
-          <dd>These lines are sent after <span class="keys"><kbd>Esc</kbd></span>, so Claude stops before its next step.</dd>
-        </div>
-      </dl>
-      <p>You can add your own lines and change the keys a crack sends.</p>
-      <p>A <strong>Reset Claude</strong> button types "normal mode", then "Continue.".</p>
     </div>
-    <figure class="screen shot">
-      <img src="assets/settings.png" alt="The NJ-Whip Settings window: an on and off switch at the top and a grid of whips to choose from, with Classic selected." width="696" height="984" loading="lazy">
-      <figcaption>The Settings window, where you pick a whip.</figcaption>
-    </figure>
-  </div>
-</section>
-
-<section id="where">
-  <div class="wrap">
-    <div class="head">
-      <h2>Made for Claude Code, wherever you type to it</h2>
-      <p>NJ-Whip types into whatever window you were in last. So it is made for Claude Code wherever you type to it: the VS Code panel, a terminal, the Claude desktop app, or claude.ai/code.</p>
+    <div class="shots">
+      <figure class="screen">
+        <img src="assets/settings.png" alt="The NJ-Whip window in English: the tab ribbon at the top and the whip picker below it." width="700" height="950" loading="lazy">
+        <figcaption>The window in English.</figcaption>
+      </figure>
+      <figure class="screen">
+        <img src="assets/settings-ar.png" alt="The same NJ-Whip window in Arabic: the same layout, with the words in Arabic reading right to left." width="700" height="950" loading="lazy">
+        <figcaption>The same window in Arabic.</figcaption>
+      </figure>
     </div>
   </div>
 </section>
 
-<section id="notes">
+<section id="light">
   <div class="wrap">
     <div class="head">
-      <h2>Honest notes</h2>
+      <h2>Light on your PC</h2>
+      <p>NJ-Whip is built to be light, with older and low-spec PCs in mind.</p>
+      <p>It is one small exe, and the whip is drawn on the CPU.</p>
     </div>
-    <ul class="notes">
-      <li><p>A crack types into whatever window you were in last, a code editor included.</p></li>
-      <li><p>The exe is not code-signed, so Windows SmartScreen may ask before the first run.</p></li>
-      <li><p>The instruction wording has not been measured on live sessions.</p></li>
-      <li><p>0.3.0 is an early release; not every one of these places (the VS Code panel, a terminal, the Claude desktop app, claude.ai/code) has been hand-tested yet.</p></li>
-      <li><p>NJ-Whip is not affiliated with Anthropic.</p></li>
-    </ul>
+    <table class="measure">
+      <caption>Measured with version 0.3.0 on one laptop: Intel i5-1334U, Windows 11. It has not been tested on an older PC yet. The settings window needs OpenGL.</caption>
+      <tbody>
+        <tr><th scope="row">Memory, resting in the tray</th><td>about 20 MB <small>working set</small></td></tr>
+        <tr><th scope="row">CPU, resting in the tray</th><td>about 0.5% <small>of one core</small></td></tr>
+        <tr><th scope="row">Size of the exe</th><td>about 6.7 MB</td></tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
 <section id="privacy">
   <div class="wrap">
     <h2>Privacy</h2>
-    <p class="plain">No account. No network calls. No telemetry.</p>
-    <div class="prose">
-      <p>Your settings live in one file on your computer:</p>
-      <p><code>%APPDATA%\NJ-Whip\config.toml</code></p>
-    </div>
+    <p class="plain">No account. No telemetry. One network call, and only when you ask.</p>
+    <ul class="facts">
+      <li><p>The only network call is the update check you start yourself, from the About tab.</p></li>
+      <li><p>Your settings live in one file on your computer: <code>%APPDATA%\NJ-Whip\config.toml</code></p></li>
+      <li><p>This page has no analytics and loads nothing from other sites.</p></li>
+    </ul>
   </div>
 </section>
 
@@ -239,13 +388,129 @@
   <div class="wrap">
     <div class="box">
       <h2>Get NJ-Whip</h2>
-      <p>One small exe, about 6.5 MB. No installer. For Windows 10 2004 or later. Version 0.3.0, written in Rust, free under the MIT licence.</p>
+      <ol>
+        <li>Download <strong>NJ-Whip.exe</strong>.</li>
+        <li>Run it. The window opens and the monogram appears in the tray.</li>
+        <li>Flip the switch to <strong>On</strong>.</li>
+      </ol>
       <div class="actions">
         <a class="btn" href="https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>Download NJ-Whip.exe</a>
         <a class="btn quiet" href="https://github.com/NJ-Burrito/NJ-Whip/releases/latest">All releases</a>
         <a class="btn quiet" href="https://github.com/NJ-Burrito/NJ-Whip">Source code</a>
       </div>
+      <p>One exe, about 6.7 MB. No installer, no account. Windows 10 (2004 or later) and Windows 11. Version 0.4.0, written in Rust, free under the MIT licence.</p>
     </div>
+    <h3 class="vh">Honest notes</h3>
+    <ul class="facts">
+      <li><p>The exe is not code-signed, so Windows SmartScreen may ask before the first run.</p></li>
+      <li><p>A crack types into whatever window you were in last, a code editor included.</p></li>
+      <li><p>This is an early release. Not every place you type to Claude (the VS Code panel, a terminal, the Claude desktop app, claude.ai/code) has been hand-tested yet.</p></li>
+      <li><p>NJ-Whip is an independent project. It is not affiliated with Anthropic.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <div class="faq">
+      <details>
+        <summary>Does it make Claude faster?</summary>
+        <p>It sends an instruction that asks for the smallest change that works and no detours. The wording follows published guidance on steering Claude Code.</p>
+        <p>Its effect has not been measured on live sessions, so there is no speed figure to give.</p>
+      </details>
+      <details>
+        <summary>Does a crack interrupt Claude?</summary>
+        <p>Faster, Harder and Happier lines are queued without Esc, so nothing Claude is doing is cancelled.</p>
+        <p>Careful and Focus lines are sent after Esc, so Claude stops before its next step.</p>
+      </details>
+      <details>
+        <summary>Where does it type?</summary>
+        <p>Into whatever window you were in last. It is made for Claude Code wherever you type to it: the VS Code panel, a terminal, the Claude desktop app, or claude.ai/code.</p>
+      </details>
+      <details>
+        <summary>Windows asks before it runs. Is that expected?</summary>
+        <p>Yes. The exe is not code-signed, so SmartScreen may ask before the first run: choose "More info", then "Run anyway".</p>
+        <p>The source is open, and you can build the exe yourself.</p>
+      </details>
+      <details>
+        <summary>Will it suit my older PC?</summary>
+        <p>It is built to be light, and the measured numbers are in <a href="#light">Light on your PC</a>.</p>
+        <p>It has not been tested on an older PC yet. It needs Windows 10 (2004 or later) or Windows 11, and the settings window needs OpenGL.</p>
+      </details>
+      <details>
+        <summary>How does it update?</summary>
+        <p>Open the About tab and press Check for updates. NJ-Whip asks GitHub for the latest release only when you press that button.</p>
+        <p>It installs the update only when you confirm.</p>
+      </details>
+      <details>
+        <summary>Can I change what it types?</summary>
+        <p>Yes. Choose one of six instruction packs, add your own lines per whip, and change the keys a crack sends.</p>
+      </details>
+      <details>
+        <summary>Does it work in Arabic?</summary>
+        <p>The window has an Arabic interface. The messages a crack types to Claude are in English.</p>
+      </details>
+      <details>
+        <summary>Is there a Mac or Linux version?</summary>
+        <p>No. NJ-Whip is for Windows only.</p>
+      </details>
+      <details>
+        <summary>Where do the sounds come from?</summary>
+        <p>From recordings under the CC0 and CC BY licences, trimmed and loudness-normalised for NJ-Whip. The whoosh is made by the app itself.</p>
+        <div class="credits">
+          <table>
+            <thead><tr><th scope="col">File</th><th scope="col">Author and source</th><th scope="col">Licence</th></tr></thead>
+            <tbody>
+<!--credits-->
+            <tr><th scope="row"><bdi>crack-1.mp3</bdi></th><td><a href="https://freesound.org/people/JayRom01/sounds/615761/" rel="noopener"><bdi>JayRom01</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>crack-2.mp3</bdi></th><td><a href="https://freesound.org/people/SciFiSounds/sounds/529925/" rel="noopener"><bdi>SciFiSounds</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>crack-3.mp3</bdi></th><td><a href="https://freesound.org/people/modusmogulus/sounds/841380/" rel="noopener"><bdi>modusmogulus</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>crack-4.mp3</bdi></th><td><a href="https://freesound.org/people/modusmogulus/sounds/794514/" rel="noopener"><bdi>modusmogulus</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>crack-5.mp3</bdi></th><td><a href="https://freesound.org/people/craigsmith/sounds/675833/" rel="noopener"><bdi>craigsmith</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>neon.mp3</bdi></th><td><a href="https://freesound.org/people/JoelAudio/sounds/136542/" rel="noopener"><bdi>JoelAudio</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>elephant.mp3</bdi></th><td><a href="https://commons.wikimedia.org/wiki/File:Elephant_voice_-_trumpeting.ogg" rel="noopener"><bdi>தகவலுழவன் (Wikimedia Commons)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>cowboy.mp3</bdi></th><td><a href="https://freesound.org/people/shawshank73/sounds/102437/" rel="noopener"><bdi>shawshank73</bdi></a></td><td><bdi>CC BY 3.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>cheer.mp3</bdi></th><td><a href="https://freesound.org/people/Sadiquecat/sounds/810904/" rel="noopener"><bdi>Sadiquecat (&quot;Yippee - Multi-Take&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>drill.mp3</bdi></th><td><a href="https://freesound.org/people/qubodup/sounds/161967/" rel="noopener"><bdi>qubodup</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>gong.mp3</bdi></th><td><a href="https://freesound.org/people/Rinus_Marais/sounds/655463/" rel="noopener"><bdi>Rinus_Marais</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>ninja.mp3</bdi></th><td><a href="https://freesound.org/people/Qvantor/sounds/877976/" rel="noopener"><bdi>Qvantor</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>pirate.mp3</bdi></th><td><a href="https://freesound.org/people/AshdenWicka/sounds/846328/" rel="noopener"><bdi>AshdenWicka (&quot;YAARGH&quot; - pirate sound effects)</bdi></a></td><td><bdi>CC BY 4.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>neon-crack.mp3</bdi></th><td><a href="https://freesound.org/people/AnthonyChan0/sounds/264779/" rel="noopener"><bdi>AnthonyChan0 (&quot;Civilian Stun Gun 1/10s zap&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>elephant-crack.mp3</bdi></th><td><a href="https://freesound.org/people/sgrowe/sounds/342535/" rel="noopener"><bdi>sgrowe (&quot;Medium Thud 1&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>cowboy-crack.mp3</bdi></th><td><a href="https://freesound.org/people/modusmogulus/sounds/817032/" rel="noopener"><bdi>modusmogulus (&quot;Whip breaking sound barrier (recording)&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>cheer-crack.mp3</bdi></th><td><a href="https://freesound.org/people/Sorinious_Genious/sounds/561119/" rel="noopener"><bdi>Sorinious_Genious (&quot;Clap-9.wav&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>sauce-crack.mp3</bdi></th><td><a href="https://freesound.org/people/sebastientate/sounds/719131/" rel="noopener"><bdi>sebastientate (&quot;Splat 3&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>drill-crack.mp3</bdi></th><td><a href="https://freesound.org/people/KEVOY/sounds/82281/" rel="noopener"><bdi>KEVOY (&quot;acoustic snare rimshot.wav&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>zen-crack.mp3</bdi></th><td><a href="https://freesound.org/people/Romeo_Kaleikau/sounds/588244/" rel="noopener"><bdi>Romeo_Kaleikau (&quot;Bamboo Knock.wav&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>ninja-crack.mp3</bdi></th><td><a href="https://freesound.org/people/GaussTheWizard/sounds/367182/" rel="noopener"><bdi>GaussTheWizard (&quot;swing.mp3&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>pirate-crack.mp3</bdi></th><td><a href="https://freesound.org/people/ani_music/sounds/244982/" rel="noopener"><bdi>ani_music (&quot;Wing Flap (Flag Flapping) 5a&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>chef-crack.mp3</bdi></th><td><a href="https://freesound.org/people/Kane53126/sounds/257947/" rel="noopener"><bdi>Kane53126 (&quot;Pan Hit 2.wav&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>wizard-crack.mp3</bdi></th><td><a href="https://freesound.org/people/qubodup/sounds/211624/" rel="noopener"><bdi>qubodup (&quot;Magic Wand Glitter&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>penguin-crack.mp3</bdi></th><td><a href="https://freesound.org/people/qubodup/sounds/861826/" rel="noopener"><bdi>qubodup (&quot;Squeaky Toy 8&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>storm-crack.mp3</bdi></th><td><a href="https://freesound.org/people/rayjensen/sounds/200990/" rel="noopener"><bdi>rayjensen (&quot;thunder-crack 41k 16bit mono.wav&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+            <tr><th scope="row"><bdi>vine-crack.mp3</bdi></th><td><a href="https://freesound.org/people/Seth_Makes_Sounds/sounds/852530/" rel="noopener"><bdi>Seth_Makes_Sounds (&quot;Foliage Sound&quot;)</bdi></a></td><td><bdi>CC0 1.0</bdi></td></tr>
+<!--/credits-->
+            </tbody>
+          </table>
+        </div>
+        <p>The same list is in <a href="https://github.com/NJ-Burrito/NJ-Whip/blob/main/CREDITS.md">CREDITS.md</a>.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section id="more">
+  <div class="wrap">
+    <h2>More tools by NJ-Burrito</h2>
+    <ul class="more">
+      <li><a href="https://nj-burrito.github.io/NJ-Kit/">NJ-Kit</a><p>A working method and skills for Claude Code. Every skill ends in a script that checks the work.</p></li>
+      <li><a href="https://nj-burrito.github.io/QA-Wrap/">QA-Wrap</a><p>A browser extension for testers: it records a test session, links each failure to the click behind it, and writes the bug report.</p></li>
+      <li><a href="https://nj-burrito.github.io/Business-Wrap/">Business-Wrap</a><p>Evidence in, one requirements document out, in Arabic and English.</p></li>
+      <li><a href="https://nj-burrito.github.io/Profile-Wrap/">Profile-Wrap</a><p>Plans, writes and checks LinkedIn posts, and posts only after you tap Allow.</p></li>
+      <li><a href="https://nj-burrito.github.io/story-wrap/">Story-Wrap</a><p>A Claude Code toolkit for Arabic animated story reels.</p></li>
+      <li><a href="https://nj-burrito.github.io/">Portfolio</a><p>Nader Alzghoul, QA Automation Engineer in Amman, Jordan.</p></li>
+    </ul>
   </div>
 </section>
 
@@ -254,19 +519,370 @@
 <footer>
   <div class="wrap">
     <p>By <a href="https://nj-burrito.github.io/">Nader Alzghoul (NJ-Burrito)</a>. Free and open source under the MIT licence. Not affiliated with Anthropic.</p>
-    <nav aria-label="More from the same author">
-      <a href="https://nj-burrito.github.io/">Portfolio</a>
-      <a href="https://nj-burrito.github.io/QA-Wrap/">QA-Wrap</a>
-      <a href="https://nj-burrito.github.io/NJ-Kit/">NJ-Kit</a>
-      <a href="https://nj-burrito.github.io/Profile-Wrap/">Profile-Wrap</a>
-      <a href="https://nj-burrito.github.io/Business-Wrap/">Business-Wrap</a>
-      <a href="https://nj-burrito.github.io/story-wrap/">Story-Wrap</a>
+    <nav aria-label="Project links">
       <a href="https://github.com/NJ-Burrito/NJ-Whip">GitHub</a>
+      <a href="https://github.com/NJ-Burrito/NJ-Whip/releases/latest">Releases</a>
+      <a href="https://github.com/NJ-Burrito/NJ-Whip/blob/main/CREDITS.md">Sound credits</a>
+      <a href="https://github.com/NJ-Burrito/NJ-Whip/blob/main/LICENSE">MIT licence</a>
       <a href="ar/" hreflang="ar" lang="ar">العربية</a>
     </nav>
   </div>
 </footer>
 
-<script>(function(){var v=document.querySelector("video");if(v&&matchMedia("(prefers-reduced-motion: reduce)").matches){v.removeAttribute("autoplay");v.pause()}})()</script>
+<script data-site data-assets="assets/">/* NJ-Whip site. Source: web/site.js (web/build.py puts it into both pages and renews the CSP hash).
+   The whips, their physics, the crack detection, the effects, the heat meter and the glow are the
+   app's own engine (assets/nj-whip.wasm). This file only feeds it the pointer, shows its pixels,
+   plays the sound files it names and sets the combo label as page text. Without the wasm every
+   stage keeps its still picture. */
+(() => {
+  'use strict';
+  const D = document, root = D.documentElement;
+  const A = D.currentScript.getAttribute('data-assets') || 'assets/';
+  const calm = matchMedia('(prefers-reduced-motion: reduce)');
+  const $ = (s, el) => (el || D).querySelector(s), $$ = (s, el) => [...(el || D).querySelectorAll(s)];
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  let X = null, cat = null, booting = null;
+
+  /* ---------- engine ---------- */
+  function boot() {
+    if (!booting) {
+      booting = fetch(A + 'nj-whip.wasm')
+        .then((r) => { if (!r.ok) throw new Error('wasm ' + r.status); return r.arrayBuffer(); })
+        .then((b) => WebAssembly.instantiate(b, {}))
+        .then((m) => {
+          X = m.instance.exports;
+          X.seed((Math.random() * 2 ** 32) >>> 0, (Math.random() * 2 ** 32) >>> 0);
+          const at = X.catalogue(), len = X.catalogue_len(); /* first: making the text may grow the memory */
+          cat = JSON.parse(new TextDecoder().decode(new Uint8Array(X.memory.buffer, at, len)));
+          root.classList.add('live');
+        })
+        .catch((e) => { still(); throw e; });
+    }
+    return booting;
+  }
+  /* No engine: the stills stay, the live controls go. */
+  function still() {
+    X = null; runners.length = 0;
+    root.classList.remove('live'); root.classList.add('still');
+  }
+
+  class Stage {
+    constructor(canvas, w, h, seg, opts) {
+      this.c = canvas; this.ctx = canvas.getContext('2d');
+      this.id = X.stage_new(w, h, seg); X.stage_opts(this.id, opts);
+      this.fit(w, h); this.x = w / 2; this.y = h / 2; this.cracks = 0;
+    }
+    fit(w, h) { this.w = this.c.width = w; this.h = this.c.height = h; this.buf = null; }
+    resize(w, h) { X.stage_resize(this.id, w, h); this.fit(w, h); this.x = w / 2; this.y = h / 2; }
+    /* Views into the wasm memory; they are made again whenever the memory has grown. */
+    get out() {
+      if (this.buf !== X.memory.buffer) {
+        this.buf = X.memory.buffer;
+        this.img = new ImageData(new Uint8ClampedArray(this.buf, X.stage_pixels(this.id), this.w * this.h * 4), this.w, this.h);
+        this.o = new Float32Array(this.buf, X.stage_out(this.id), 16);
+      }
+      return this.o;
+    }
+    take(i, x, y, settle) {
+      this.x = x; this.y = y;
+      X.stage_whip(this.id, i, x, y);
+      if (settle) X.stage_settle(this.id, settle);
+    }
+    /* One frame; `all` paints the whole stage (a canvas that has not seen this stage yet). */
+    frame(dt, all, ctx) {
+      const bits = X.stage_frame(this.id, dt, this.x, this.y), o = this.out;
+      if (all) (ctx || this.ctx).putImageData(this.img, 0, 0);
+      else if (bits & 1) this.ctx.putImageData(this.img, 0, 0, o[0], o[1], o[2] - o[0], o[3] - o[1]);
+      return bits;
+    }
+    /* True once per crack, whatever caused it (a swing, a click, a button). */
+    cracked() { const n = this.out[4]; if (n === this.cracks) return false; this.cracks = n; return true; }
+    crack(dir) { X.stage_crack(this.id, dir); }
+  }
+
+  /* ---------- one frame loop for everything that moves ---------- */
+  const runners = [];
+  let raf = 0, last = 0;
+  function tick(now) {
+    raf = 0;
+    const dt = Math.min((now - last) / 1000, 0.1); last = now;
+    try {
+      for (let i = runners.length; i--;) if (runners[i](dt) === false) runners.splice(i, 1);
+    } catch (e) { still(); throw e; }
+    kick();
+  }
+  function kick() { if (!raf && runners.length && !D.hidden) { raf = requestAnimationFrame(tick); } }
+  function run(fn) {
+    if (!runners.includes(fn)) runners.push(fn);
+    if (!raf) last = performance.now();
+    kick();
+  }
+  D.addEventListener('visibilitychange', () => { last = performance.now(); kick(); });
+
+  /* ---------- sound: off until the visitor turns it on or presses a whip ---------- */
+  let actx = null, soundOn = false;
+  const clips = {}, swish = {};
+  function audio() {
+    if (!actx) { const C = window.AudioContext || window.webkitAudioContext; if (C) actx = new C(); }
+    if (actx && actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function clip(file) {
+    return clips[file] || (clips[file] = fetch(A + 'sounds/' + file)
+      .then((r) => r.arrayBuffer())
+      .then((b) => new Promise((ok, no) => audio().decodeAudioData(b, ok, no)))
+      .catch(() => null));
+  }
+  function out(buf, gain) {
+    const s = actx.createBufferSource(), g = actx.createGain();
+    s.buffer = buf; g.gain.value = gain; s.connect(g); g.connect(actx.destination); s.start();
+  }
+  function play(file, gain) { if (soundOn && audio()) clip(file).then((b) => b && soundOn && out(b, gain)); }
+  /* A crack as the app plays it (src/sound.rs): one of the whip's cracks at random, its own clips
+     on top. Those clips then rest until they have ended plus 1 s (EXTRAS_REST); `always` is the
+     app's preview (a whip was picked), which plays them anyway. */
+  let rest = 0;
+  function crackSound(w, always) {
+    play(pick(w.cracks), 0.85);
+    if (!w.sounds.length || !soundOn || !audio() || (!always && actx.currentTime < rest)) return;
+    rest = Infinity;
+    Promise.all(w.sounds.map(clip)).then((bs) => {
+      let long = 0;
+      bs.forEach((b) => { if (b && soundOn) { out(b, 0.6); long = Math.max(long, b.duration); } });
+      rest = actx.currentTime + long + 1;
+    });
+  }
+  function preload(w) { if (soundOn && audio()) [...w.cracks, ...w.sounds].forEach(clip); }
+  /* The app's whoosh (src/sound.rs): noise through a low-pass that opens and closes with the swing. */
+  function whoosh(power, weight) {
+    if (!soundOn || !audio()) return;
+    weight = clamp(weight, 0.5, 2);
+    const key = weight.toFixed(1);
+    if (!swish[key]) {
+      const n = Math.floor(actx.sampleRate * (0.14 + 0.1 * weight)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+      let lp = 0, lp2 = 0;
+      for (let i = 0; i < n; i++) {
+        const env = Math.sin(Math.PI * i / n) ** 1.6, cut = (0.03 + 0.2 * env) / Math.sqrt(weight);
+        lp += (Math.random() * 2 - 1 - lp) * cut; lp2 += (lp - lp2) * cut;
+        d[i] = (lp * 0.5 + (lp - lp2) * 1.1) * env;
+      }
+      swish[key] = b;
+    }
+    out(swish[key], 0.85 * (0.2 + 0.5 * clamp(power, 0, 1)));
+  }
+  function setSound(on) {
+    soundOn = on && !!audio();
+    $$('[data-sound]').forEach((b) => {
+      b.setAttribute('aria-pressed', soundOn);
+      $('[data-label]', b).textContent = b.getAttribute(soundOn ? 'data-on' : 'data-off');
+    });
+  }
+  $$('[data-sound]').forEach((b) => b.addEventListener('click', () => setSound(!soundOn)));
+
+  /* ---------- the combo label: page text over the stage, in the web font ---------- */
+  function shout(el, st, w) {
+    const o = st.out, n = o[6];
+    if (n < 2) return;
+    const k = el.parentNode.clientWidth / st.w, s = el.style;
+    el.textContent = w.shout + ' ×' + n;
+    s.fontSize = ((30 + 3 * Math.min(n, 12)) * k).toFixed(1) + 'px';
+    s.left = clamp((o[8] + o[10] * 24) / st.w * 100, 14, 86) + '%';
+    s.top = clamp((o[9] - 90) / st.h * 100, 24, 92) + '%';
+    s.setProperty('--tilt', (o[10] > 0 ? -6 : -3) + 'deg');
+    s.setProperty('--hue', w.hue);
+    el.classList.toggle('five', n % 5 === 0);
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    clearTimeout(el.t); el.t = setTimeout(() => el.classList.remove('on'), 1500);
+  }
+
+  /* ---------- the gallery: a whip leans toward the pointer; a press cracks it with its sound ---------- */
+  const GW = 480, GH = 320, GSEG = 0.6, REST = [118, 150];
+  function gallery(cards) {
+    const brush = new Stage(D.createElement('canvas'), GW, GH, GSEG, 0);
+    cards.forEach((card, i) => {
+      const cv = $('canvas', card);
+      cv.width = GW; cv.height = GH;
+      brush.take(i, REST[0], REST[1], 240);
+      brush.frame(0, true, cv.getContext('2d'));
+      let st = null, aim = null, idle = 0, nod = 0;
+      const live = () => {
+        if (!st) { st = new Stage(cv, GW, GH, GSEG, 0); st.take(i, REST[0], REST[1], 240); st.frame(0, true); }
+        idle = 0; run(step);
+      };
+      function step(dt) {
+        nod = Math.max(0, nod - dt);
+        const to = aim || [REST[0] + 46 * Math.sin(nod * 14) * nod, REST[1]], f = 1 - Math.exp(-dt * 9);
+        st.x += (to[0] - st.x) * f; st.y += (to[1] - st.y) * f;
+        idle = st.frame(dt) & 1 || aim || nod ? 0 : idle + 1;
+        return idle < 45;
+      }
+      card.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'touch' || calm.matches) return;
+        const r = cv.getBoundingClientRect();
+        aim = [REST[0] + ((e.clientX - r.left) / r.width - 0.5) * 150, REST[1] + ((e.clientY - r.top) / r.height - 0.5) * 70];
+        live();
+      });
+      card.addEventListener('pointerleave', () => { aim = null; });
+      card.addEventListener('focus', () => { if (!calm.matches && card.matches(':focus-visible')) { nod = 0.7; live(); } });
+      card.addEventListener('click', () => {
+        const w = cat.whips[i];
+        setSound(true); crackSound(w, true);
+        live(); st.crack(0);
+      });
+    });
+  }
+
+  /* ---------- heat and streaks: the picked whip, cracked on a beat until the meter is full ---------- */
+  const HW = 960, HH = 600, HSEG = 0.9, BEAT = 0.7, LOOP = 9;
+  function heat(el) {
+    const cv = $('canvas', el), lab = $('.shout', el), st = new Stage(cv, HW, HH, HSEG, 2);
+    let i = 0, t = 0, beat = 0, seen = false, auto = !calm.matches, idle = 0;
+    const hand = (time) => {
+      const amp = 0.17 * HW * clamp((5.2 - time) / 0.7, 0, 1);
+      return [HW * 0.42 + amp * Math.sin(Math.PI * time / BEAT), HH * 0.58 + 10 * Math.sin(time * 2.2)];
+    };
+    function take() {
+      X.stage_reset(st.id);
+      t = 0; beat = 0; lab.classList.remove('on');
+      st.take(i, ...hand(0), 200); st.frame(0, true);
+      el.style.setProperty('--hue', cat.whips[i].hue);
+      if (auto) wake(); else pose();
+    }
+    /* Reduced motion: one still frame at full heat, no loop. */
+    function pose() {
+      for (let k = 0; k < 4; k++) st.crack(k % 2 ? -1 : 1);
+      for (let k = 0; k < 66; k++) X.stage_frame(st.id, 1 / 60, st.x, st.y);
+      st.frame(0, true); shout(lab, st, cat.whips[i]); clearTimeout(lab.t);
+    }
+    function step(dt) {
+      if (!seen) return false;
+      if (auto) {
+        t += dt;
+        if (t > LOOP) { t = 0; beat = 0; }
+        [st.x, st.y] = hand(t);
+        const due = Math.min(6, Math.floor(t / BEAT));
+        if (due > beat) { beat = due; st.crack(beat % 2 ? -1 : 1); }
+      }
+      idle = st.frame(dt) & 1 ? 0 : idle + 1;
+      if (st.cracked()) shout(lab, st, cat.whips[i]);
+      return auto || idle < 60;
+    }
+    const wake = () => { idle = 0; run(step); };
+    $$('input[name=heat-whip]', el).forEach((r, k) => r.addEventListener('change', () => { i = k; take(); }));
+    $('[data-crack]', el).addEventListener('click', () => {
+      /* A press takes over from the demo: every crack from here on is the visitor's. */
+      if (auto) { auto = false; X.stage_reset(st.id); }
+      st.crack(st.cracks % 2 ? -1 : 1); wake();
+    });
+    new IntersectionObserver((es) => { seen = es[0].isIntersecting; if (seen) wake(); }).observe(el);
+    calm.addEventListener('change', () => { auto = !calm.matches; take(); });
+    take();
+  }
+
+  /* ---------- the room: the visitor's pointer holds the whip ---------- */
+  function room(el) {
+    const cv = $('canvas', el), frame = cv.parentNode, lab = $('.shout', el);
+    const typed = $('[data-typed]', el), tag = $('[data-tag]', el), say = $('[data-say]', el), packs = $('select', el);
+    const names = el.getAttribute('data-intents').split('|');
+    let st = null, i = 0, idle = 0, seen = false, job = 0, press = null;
+    const world = () => {
+      const r = frame.getBoundingClientRect(), w = Math.round(clamp(r.width * Math.min(devicePixelRatio || 1, 1.5), 720, 1280));
+      return [w, Math.round(w * r.height / r.width)];
+    };
+    const [w0, h0] = world();
+    st = new Stage(cv, w0, h0, 1, 3);
+    const home = () => { st.take(i, st.w * 0.3, st.h * 0.5, 200); st.frame(0, true); };
+    home();
+
+    function step(dt) {
+      if (!seen) return false;
+      const bits = st.frame(dt);
+      if (bits & 4) whoosh(st.out[5], cat.whips[i].weight);
+      if (st.cracked()) onCrack();
+      idle = bits & 1 ? 0 : idle + 1;
+      return idle < 90;
+    }
+    const wake = () => { idle = 0; run(step); };
+
+    function onCrack() {
+      const w = cat.whips[i], n = cat.intents.indexOf(w.intent), row = cat.packs[packs.selectedIndex].rows[n];
+      const text = pick(w.lines).trim() + ' ' + row.light;
+      crackSound(w); shout(lab, st, w);
+      el.classList.add('cracked');
+      tag.textContent = names[n] + ' · ' + el.getAttribute(row.esc ? 'data-esc' : 'data-queued');
+      tag.setAttribute('data-how', row.esc ? 'esc' : 'queued');
+      say.textContent = w.shout + '. ' + text;
+      const mine = ++job;
+      if (calm.matches) { typed.textContent = text; return; }
+      let at = 0;
+      typed.textContent = '';
+      run(() => {
+        if (mine !== job) return false;
+        at = Math.min(text.length, at + 3);
+        typed.textContent = text.slice(0, at);
+        return at < text.length;
+      });
+    }
+
+    const to = (e) => {
+      const r = cv.getBoundingClientRect();
+      st.x = (e.clientX - r.left) * st.w / r.width; st.y = (e.clientY - r.top) * st.h / r.height;
+      wake();
+    };
+    cv.addEventListener('pointermove', to);
+    cv.addEventListener('pointerdown', (e) => {
+      to(e);
+      if (e.pointerType === 'mouse') { if (e.button === 0) st.crack(0); return; }
+      press = [e.clientX, e.clientY, e.timeStamp];
+      try { cv.setPointerCapture(e.pointerId); } catch (_) { /* the pointer is already gone */ }
+    });
+    cv.addEventListener('pointerup', (e) => {
+      /* touch: a tap cracks, a drag swings */
+      if (press && e.timeStamp - press[2] < 300 && Math.hypot(e.clientX - press[0], e.clientY - press[1]) < 12) { st.crack(0); wake(); }
+      press = null;
+    });
+    $$('input[name=room-whip]', el).forEach((r, k) => r.addEventListener('change', () => {
+      i = k;
+      X.stage_whip(st.id, i, st.x, st.y);
+      el.style.setProperty('--hue', cat.whips[i].hue);
+      preload(cat.whips[i]);
+      if (soundOn) crackSound(cat.whips[i], true);
+      wake();
+    }));
+    $('[data-crack]', el).addEventListener('click', () => { st.crack(0); wake(); });
+    $('[data-sound]', el).addEventListener('click', () => preload(cat.whips[i]));
+    let fit = 0;
+    new ResizeObserver(() => {
+      clearTimeout(fit);
+      fit = setTimeout(() => {
+        const [w, h] = world();
+        if (Math.abs(w - st.w) < 24 && Math.abs(h - st.h) < 24) return;
+        st.resize(w, h); home(); wake();
+      }, 160);
+    }).observe(frame);
+    new IntersectionObserver((es) => { seen = es[0].isIntersecting; if (seen) wake(); }).observe(el);
+    el.style.setProperty('--hue', cat.whips[0].hue);
+  }
+
+  /* ---------- start: the engine loads when a stage comes near the screen ---------- */
+  const stages = $$('[data-stage]');
+  if (stages.length && 'WebAssembly' in window && 'IntersectionObserver' in window && 'ResizeObserver' in window) {
+    const io = new IntersectionObserver((es) => {
+      if (!es.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      boot().then(() => {
+        try {
+          gallery($$('.whip'));
+          heat($('#heat-stage'));
+          room($('#room-stage'));
+        } catch (e) { still(); throw e; }
+      }).catch((e) => console.warn('NJ-Whip: the live whips did not start, the pictures stay.', e));
+    }, { rootMargin: '900px 0px' });
+    stages.forEach((s) => io.observe(s));
+  } else if (stages.length) {
+    still();
+  }
+})();</script>
 </body>
 </html>

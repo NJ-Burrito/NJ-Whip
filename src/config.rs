@@ -37,6 +37,8 @@ pub struct Config {
     /// HARDER messages end with the word `ultrathink`.
     pub harder_ultrathink: bool,
     pub theme: Theme,
+    /// The language of the window's words (the layout is the same in both).
+    pub lang: crate::lang::Lang,
     /// Per-whip replacement fun lines (missing = the whip's own lines).
     pub custom_lines: HashMap<WhipId, Vec<String>>,
     /// Per-whip custom tip image (a processed PNG under APPDATA/NJ-Whip/tips).
@@ -73,6 +75,7 @@ impl Default for Config {
             always_esc: false,
             harder_ultrathink: false,
             theme: Theme::System,
+            lang: Default::default(),
             custom_lines: HashMap::new(),
             custom_tips: HashMap::new(),
         }

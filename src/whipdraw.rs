@@ -454,6 +454,14 @@ fn draw_tip(pm: &mut Pixmap, pen: &mut Pen, pts: &[V], tip: Tip, l: &Look) {
             outline(pm, pen, cloud(), 0x5B6B86, 1.2, tf);
             fill(pm, oval(-6.0, -8.0, 6.0, 2.6), 0xFFFFFF, 0.7, tf);
         }
+        Tip::Pan => {
+            let tf = rot_tf(t, ang);
+            line(pm, pen, (0.0, 0.0), (10.0, 0.0), 0x3A2A1C, 1.0, 4.0, tf);
+            fill(pm, circle(20.0, 0.0, 11.0), 0x2B2D33, 1.0, tf);
+            outline(pm, pen, circle(20.0, 0.0, 11.0), 0x0F1013, 1.6, tf);
+            outline(pm, pen, circle(20.0, 0.0, 7.8), 0x555A64, 1.0, tf);
+            fill(pm, oval(17.0, -4.0, 4.4, 1.7), 0xFFFFFF, 0.28, tf);
+        }
         Tip::Kunai => {
             let tf = rot_tf(t, ang);
             line(pm, pen, (0.0, 0.0), (5.0, 0.0), 0x1E1F24, 1.0, 3.0, tf);

@@ -495,9 +495,12 @@ impl Canvas {
         let (w, h) = (self.pm.width() as i32, self.pm.height() as i32);
         let catching = s.whip.is_some();
         let mut now = layers(s, w, h, work);
-        if !now[L_BURST].0.is_empty() {
-            self.tick += 1;
-            now[L_BURST].1 = self.tick;
+        if let Some(fx) = s.burst.filter(|_| !now[L_BURST].0.is_empty()) {
+            // moving parts change every frame; a mark left behind only on its fade steps
+            if fx.moving() {
+                self.tick += 1;
+            }
+            now[L_BURST].1 = self.tick.wrapping_add(fx.mark_step().wrapping_mul(0x9E37_79B9_7F4A_7C15));
         }
         let whole = self.mode != Some((catching, work));
         self.mode = Some((catching, work));

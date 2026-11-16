@@ -1,3 +1,5 @@
 target/
 /NJ-Whip.exe
 .superpowers/
+NJ-Whip.old
+__pycache__/

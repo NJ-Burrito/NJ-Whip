@@ -1,15 +1,20 @@
-//! The NJ-Whip window: ON/OFF, whip picker, messages, custom tip, hotkeys, options.
+//! The NJ-Whip window: a header (ON/OFF, language) and a tab ribbon that stay in place, one
+//! tab's content scrolling under them (whip, message, hotkeys, options, about), and a footer.
 //! Every change is saved at once and the engine thread is told to apply it.
 
-use crate::app::{self, post, QUITTING, WM_RELOAD, WM_RESET, WM_TEST};
+use crate::app::{self, post, QUITTING, WM_RELOAD, WM_RESET, WM_SOUND, WM_TEST};
+use crate::lang::{Lang, Words, PIECE};
 use crate::rage::CRACKS_TO_FULL;
 use crate::brand::{self, Palette, GLACIER, POLAR_NIGHT};
 use crate::config::{self, Config, MacroStep, Theme};
 use crate::messages::{self, Pack, Profile};
 use crate::whips::{self, WhipId, ALL};
-use crate::{autostart, glyphs, keys, tipimg, whipdraw};
+use crate::{autostart, glyphs, keys, tipimg, update, whipdraw};
+use eframe::egui::text::ByteIndex;
 use eframe::egui::{self, Color32, CornerRadius, FontFamily, RichText, Sense, Stroke, StrokeKind, Vec2};
+use std::rc::Rc;
 use std::sync::atomic::Ordering;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
 pub const TITLE: &str = "NJ-Whip";
@@ -53,6 +58,110 @@ fn shift_only_plain_key(key: egui::Key, mods: egui::Modifiers) -> bool {
     mods.shift && !mods.ctrl && !mods.alt && !f_key
 }
 
+const SITE: &str = "https://nj-burrito.github.io/NJ-Whip/";
+const SOURCE: &str = "https://github.com/NJ-Burrito/NJ-Whip";
+const CREDITS: &str = "https://github.com/NJ-Burrito/NJ-Whip/blob/main/CREDITS.md";
+const MORE_TOOLS: &str = "https://nj-burrito.github.io/";
+const RED: u32 = 0xE0524A;
+/// A hover text is broken into rows this wide.
+const TIP_WIDTH: f32 = 300.0;
+
+#[derive(PartialEq, Clone, Copy)]
+enum Tab {
+    Whip,
+    Message,
+    Hotkeys,
+    Options,
+    About,
+}
+
+impl Tab {
+    const ALL: [Tab; 5] = [Tab::Whip, Tab::Message, Tab::Hotkeys, Tab::Options, Tab::About];
+
+    fn name(self) -> &'static str {
+        match self {
+            Tab::Whip => "Whip",
+            Tab::Message => "Message",
+            Tab::Hotkeys => "Hotkeys",
+            Tab::Options => "Options",
+            Tab::About => "About",
+        }
+    }
+
+    fn fade_id(self) -> egui::Id {
+        egui::Id::unique("tab-in").with(self as u8)
+    }
+}
+
+/// Where an update stands (only ever moves when the user presses a button in About).
+#[derive(Clone, PartialEq)]
+enum Update {
+    Idle,
+    Checking,
+    Latest,
+    Available(update::Version),
+    Installing,
+    /// The line that says what failed (English, with a `{}` for the reason) and the reason.
+    Failed(&'static str, String),
+    Restarting,
+}
+
+/// A line from `Words` laid out for a widget: each of its pieces is a section of its own, so
+/// egui joins and directs each Arabic word by itself (see lang.rs).
+fn job(line: &str, font: egui::FontId, color: Color32) -> egui::text::LayoutJob {
+    let mut job = egui::text::LayoutJob::default();
+    let format = egui::TextFormat { font_id: font, color, ..Default::default() };
+    // Not `append`: it merges a piece into the one before it when their formats are the same.
+    for piece in line.split(PIECE).filter(|p| !p.is_empty()) {
+        let start = job.text.len();
+        job.text.push_str(piece);
+        job.sections.push(egui::text::LayoutSection { leading_space: 0.0, byte_range: ByteIndex(start)..ByteIndex(job.text.len()), format: format.clone() });
+    }
+    job
+}
+
+fn body_size(ui: &egui::Ui) -> f32 {
+    egui::TextStyle::Body.resolve(ui.style()).size
+}
+
+/// A line as widget text in the body face and the widget's own colour.
+fn tx(ui: &egui::Ui, line: &str) -> egui::WidgetText {
+    job(line, egui::FontId::proportional(body_size(ui)), Color32::PLACEHOLDER).into()
+}
+
+/// A line as widget text at `size` in `color`.
+fn txs(line: &str, size: f32, color: Color32) -> egui::WidgetText {
+    job(line, egui::FontId::proportional(size), color).into()
+}
+
+/// A line as widget text in the bold face.
+fn txb(line: &str, size: f32) -> egui::WidgetText {
+    job(line, egui::FontId::new(size, FontFamily::Name("bold".into())), Color32::PLACEHOLDER).into()
+}
+
+/// A line that may need several rows, at `size` points in a space `width` wide (see
+/// `Words::wrap`). The width of a joined Arabic word is not the sum of its letters', so the
+/// rows are kept a little short of the space.
+fn rows(w: &Words, ui: &egui::Ui, line: &str, size: f32, width: f32) -> String {
+    let font = egui::FontId::proportional(size);
+    w.wrap(line, width * 0.9, |s| ui.ctx().fonts_mut(|f| s.chars().map(|c| f.glyph_width(&font, c)).sum()))
+}
+
+/// A body line across the space that is left, at `size` in `color`.
+fn para_c(w: &Words, ui: &egui::Ui, line: &str, size: f32, color: Color32) -> egui::WidgetText {
+    txs(&rows(w, ui, line, size, ui.available_width()), size, color)
+}
+
+/// A body line across the space that is left.
+fn para(w: &Words, ui: &egui::Ui, line: &str) -> egui::WidgetText {
+    tx(ui, &rows(w, ui, line, body_size(ui), ui.available_width()))
+}
+
+/// A hover text.
+fn tip(w: &Words, ui: &egui::Ui, line: &str) -> egui::WidgetText {
+    tx(ui, &rows(w, ui, line, body_size(ui), TIP_WIDTH))
+}
+
 #[derive(PartialEq, Clone, Copy)]
 enum Rec {
     Crack,
@@ -74,8 +183,16 @@ struct Window {
     cfg: Config,
     thumbs: Vec<egui::TextureHandle>,
     logos: [egui::TextureHandle; 2],
+    /// The window's words in `cfg.lang`.
+    words: Rc<Words>,
+    /// The word "Arabic" in Arabic, for the language choice (shown in both languages).
+    ar_name: String,
+    tab: Tab,
+    update: Arc<Mutex<Update>>,
     rec: Option<Rec>,
+    /// A line in reading order (shown through `para`).
     hint: String,
+    /// A line in reading order (shown through `para`).
     status: String,
     new_line: String,
     errors: String,
@@ -109,8 +226,14 @@ impl Window {
             texture(ctx, "logo-dark", &brand::monogram(96, &POLAR_NIGHT, false)),
         ];
         let (cfg, cfg_stamp) = config::load();
+        let cfg = cfg.unwrap_or_default();
         Window {
-            cfg: cfg.unwrap_or_default(),
+            words: Rc::new(Words::new(cfg.lang)),
+            ar_name: Words::new(Lang::Ar).get("Arabic").to_string(),
+            // NJ_WHIP_TAB=about opens on that tab (used to take the window's pictures).
+            tab: std::env::var("NJ_WHIP_TAB").ok().and_then(|v| Tab::ALL.into_iter().find(|t| t.name().eq_ignore_ascii_case(&v))).unwrap_or(Tab::Whip),
+            update: Arc::new(Mutex::new(Update::Idle)),
+            cfg,
             thumbs,
             logos,
             rec: None,
@@ -139,18 +262,19 @@ impl Window {
                 self.cfg_stamp = config::mtime();
                 post(WM_RELOAD);
             }
-            Err(e) => self.status = format!("Couldn't save settings: {e}"),
+            Err(e) => self.status = self.words.text("Couldn't save settings: {}", &[&e.to_string()]),
         }
     }
 
     fn validate(&self) -> Result<(), String> {
-        let a = keys::parse_hotkey(&self.cfg.crack_hotkey).map_err(|e| format!("Crack hotkey: {e}"))?;
-        let b = keys::parse_hotkey(&self.cfg.toggle_hotkey).map_err(|e| format!("Show/hide hotkey: {e}"))?;
+        let w = &self.words;
+        let a = keys::parse_hotkey(&self.cfg.crack_hotkey).map_err(|e| w.text("Crack hotkey: {}", &[&e]))?;
+        let b = keys::parse_hotkey(&self.cfg.toggle_hotkey).map_err(|e| w.text("Show/hide hotkey: {}", &[&e]))?;
         if a == b {
-            return Err("Crack and show/hide need different hotkeys.".into());
+            return Err(w.text("Crack and show/hide need different hotkeys.", &[]));
         }
         if self.cfg.macro_steps.is_empty() {
-            return Err("The keys a crack sends need at least one step.".into());
+            return Err(w.text("The keys a crack sends need at least one step.", &[]));
         }
         Ok(())
     }
@@ -240,8 +364,10 @@ fn card<R>(p: &Palette, ui: &mut egui::Ui, title: &str, body: impl FnOnce(&mut e
             .inner_margin(egui::Margin::same(16))
             .show(ui, |ui| {
                 ui.set_width(ui.available_width());
-                ui.label(RichText::new(title).size(16.0).family(FontFamily::Name("bold".into())));
-                ui.add_space(4.0);
+                if !title.is_empty() {
+                    ui.label(txb(title, 16.0));
+                    ui.add_space(4.0);
+                }
                 body(ui)
             })
             .inner
@@ -273,10 +399,13 @@ impl Window {
             self.cfg.enabled = !self.cfg.enabled;
             self.apply();
         }
-        resp.on_hover_text(if self.cfg.enabled { "NJ-Whip is ON: hotkeys and cracks work" } else { "NJ-Whip is OFF: nothing on screen, hotkeys released" });
+        let state = if self.cfg.enabled { "NJ-Whip is ON: hotkeys and cracks work" } else { "NJ-Whip is OFF: nothing on screen, hotkeys released" };
+        let text = tip(&self.words, ui, state);
+        resp.on_hover_text(text);
     }
 
     fn header(&mut self, ui: &mut egui::Ui) {
+        let w = self.words.clone();
         ui.horizontal(|ui| {
             let logo = &self.logos[self.dark as usize];
             ui.add(egui::Image::new(logo).fit_to_exact_size(Vec2::splat(44.0)));
@@ -284,15 +413,111 @@ impl Window {
                 ui.add_space(2.0);
                 ui.label(RichText::new("NJ-Whip").size(24.0).family(FontFamily::Name("display".into())));
                 let p = self.pal();
-                let state = if self.cfg.enabled { "On · show the whip with the show/hide hotkey" } else { "Off" };
-                ui.label(RichText::new(state).size(13.0).color(c(p.muted)));
+                let state = if self.cfg.enabled { w.fill("On · {} shows the whip", &[&self.cfg.toggle_hotkey]) } else { w.get("Off").to_string() };
+                ui.label(txs(&state, 13.0, c(p.muted)));
             });
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| self.switch(ui));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                self.switch(ui);
+                ui.add_space(8.0);
+                self.language(ui);
+            });
         });
+    }
+
+    /// The language of the words (the layout stays as it is): a pill whose thumb slides to the
+    /// chosen side, eased, stretching a little on the way; the tab's content fades in again.
+    fn language(&mut self, ui: &mut egui::Ui) {
+        let p = *self.pal();
+        let font = egui::FontId::new(13.0, FontFamily::Name("bold".into()));
+        let names = [ui.painter().layout_job(job("EN", font.clone(), c(p.ink))), ui.painter().layout_job(job(&self.ar_name, font, c(p.ink)))];
+        // each side is a comfortable target (44 px wide at least)
+        let cell = Vec2::new((names[0].size().x.max(names[1].size().x) + 22.0).max(44.0), 32.0);
+        let (rect, resp) = ui.allocate_exact_size(Vec2::new(cell.x * 2.0, cell.y), Sense::click());
+        let t = ui.ctx().animate_bool_with_time_and_easing(resp.id, self.cfg.lang == Lang::Ar, MOTION, egui::emath::easing::cubic_out);
+        let hover = ui.ctx().animate_bool_with_time(resp.id.with("h"), resp.hovered(), MOTION);
+        let painter = ui.painter();
+        painter.rect_filled(rect, CornerRadius::same(16), c(p.selected));
+        painter.rect_stroke(rect, CornerRadius::same(16), Stroke::new(1.0, c_a(p.accent, 0.2 + 0.5 * hover)), StrokeKind::Inside);
+        let stretch = 5.0 * (std::f32::consts::PI * t).sin();
+        let thumb = egui::Rect::from_min_size(rect.min + Vec2::new(cell.x * t, 0.0), cell).shrink(3.0).expand2(Vec2::new(stretch, -stretch * 0.25));
+        painter.rect_filled(thumb, CornerRadius::same(13), c_a(p.accent, 0.38));
+        for (k, name) in names.into_iter().enumerate() {
+            let centre = rect.min + Vec2::new(cell.x * (k as f32 + 0.5), cell.y / 2.0);
+            painter.galley(centre - name.size() / 2.0, name, c(p.ink));
+        }
+        if resp.clicked() {
+            let lang = if self.cfg.lang == Lang::En { Lang::Ar } else { Lang::En };
+            self.cfg.lang = lang;
+            self.words = Rc::new(Words::new(lang));
+            self.apply();
+            ui.ctx().animate_bool_with_time(self.tab.fade_id(), false, 0.0);
+        }
+    }
+
+    /// The tab ribbon: the chosen tab's underline grows from its middle.
+    fn tabs(&mut self, ui: &mut egui::Ui) {
+        let p = *self.pal();
+        let w = self.words.clone();
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 2.0;
+            for tab in Tab::ALL {
+                let sel = self.tab == tab;
+                let font = egui::FontId::new(14.0, FontFamily::Name("bold".into()));
+                let galley = ui.painter().layout_job(job(w.get(tab.name()), font, c(if sel { p.ink } else { p.muted })));
+                let (rect, resp) = ui.allocate_exact_size(galley.size() + Vec2::new(24.0, 18.0), Sense::click());
+                let on = ui.ctx().animate_bool_with_time(resp.id, sel, MOTION);
+                let hover = ui.ctx().animate_bool_with_time(resp.id.with("h"), resp.hovered(), MOTION);
+                let painter = ui.painter();
+                painter.rect_filled(rect.shrink2(Vec2::new(0.0, 3.0)), CornerRadius::same(8), c_a(p.accent, 0.16 * hover.max(on)));
+                painter.galley(rect.center() - galley.size() / 2.0, galley, c(p.ink));
+                let half = (rect.width() / 2.0 - 8.0) * on;
+                painter.hline(rect.center().x - half..=rect.center().x + half, rect.bottom() - 1.0, Stroke::new(2.0, c_a(p.accent, on)));
+                if resp.clicked() && !sel {
+                    self.tab = tab;
+                    // the new tab's content starts clear and fades in
+                    ui.ctx().animate_bool_with_time(tab.fade_id(), false, 0.0);
+                }
+            }
+        });
+    }
+
+    fn footer(&mut self, ui: &mut egui::Ui) {
+        let p = *self.pal();
+        ui.horizontal(|ui| {
+            ui.label(RichText::new(concat!("NJ-Whip v", env!("CARGO_PKG_VERSION"), " · © 2026 NJ-Burrito · MIT")).size(12.0).color(c(p.muted)));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button(tx(ui, self.words.get("Quit NJ-Whip"))).clicked() {
+                    app::request_quit(ui.ctx());
+                }
+            });
+        });
+    }
+
+    fn problems(&mut self, ui: &mut egui::Ui) {
+        if self.status.is_empty() && self.errors.trim().is_empty() {
+            return;
+        }
+        let p = *self.pal();
+        let w = self.words.clone();
+        card(&p, ui, w.get("Problems"), |ui| {
+            if !self.status.is_empty() {
+                ui.label(para_c(&w, ui, &self.status, body_size(ui), c(RED)));
+            }
+            if !self.errors.trim().is_empty() {
+                ui.colored_label(c(RED), self.errors.trim_end());
+                if ui.button(tx(ui, w.get("Clear"))).clicked() {
+                    let _ = std::fs::write(app::errors_path(), "");
+                    self.errors_stamp = error_stamp();
+                    self.errors = read_errors();
+                }
+            }
+        });
+        ui.add_space(8.0);
     }
 
     fn whip_picker(&mut self, ui: &mut egui::Ui) {
         let p = *self.pal();
+        let words = self.words.clone();
         let cols = 3;
         let gap = 8.0;
         let w = ((ui.available_width() - gap * (cols as f32 - 1.0)) / cols as f32).floor();
@@ -330,23 +555,27 @@ impl Window {
                 self.cfg.whip = id;
                 self.apply();
             }
+            // Picking a whip plays its sound (the engine has applied the pick by then).
+            post(WM_SOUND);
         }
         let def = whips::def(self.cfg.whip);
         ui.add_space(4.0);
         ui.horizontal_wrapped(|ui| {
             ui.label(RichText::new(def.name).family(FontFamily::Name("bold".into())));
-            ui.label(RichText::new(format!("· {}", def.intent.name())).color(c(p.accent)));
+            ui.label(txs(&format!("· {}", words.get(def.intent.name())), body_size(ui), c(p.accent)));
         });
-        ui.label(RichText::new(def.blurb).color(c(p.muted)));
-        ui.horizontal(|ui| {
-            if ui.button("Test crack").on_hover_text("Plays the crack and its effect; types nothing").clicked() {
+        ui.label(para_c(&words, ui, def.blurb, body_size(ui), c(p.muted)));
+        ui.label(para_c(&words, ui, "Pick a whip to hear its sound.", 12.0, c(p.muted)));
+        ui.horizontal_wrapped(|ui| {
+            let hover = tip(&words, ui, "Plays the crack and its effect; types nothing");
+            if ui.button(tx(ui, words.get("Test crack"))).on_hover_text(hover).clicked() {
                 post(WM_TEST);
             }
             let has_tip = self.cfg.custom_tips.contains_key(&self.cfg.whip);
-            if ui.button(if has_tip { "Change tip picture…" } else { "Use my picture as the tip…" }).clicked() {
+            if ui.button(tx(ui, words.get(if has_tip { "Change tip picture…" } else { "Use my picture as the tip…" }))).clicked() {
                 self.pick_tip();
             }
-            if has_tip && ui.button("Remove picture").clicked() {
+            if has_tip && ui.button(tx(ui, words.get("Remove picture"))).clicked() {
                 self.cfg.custom_tips.remove(&self.cfg.whip);
                 self.apply();
             }
@@ -368,25 +597,25 @@ impl Window {
     fn messages_card(&mut self, ui: &mut egui::Ui) {
         let p = *self.pal();
         let def = whips::def(self.cfg.whip);
-        let small = |s: &str| RichText::new(s).size(12.0).color(c(p.muted));
-        ui.label("Instruction pack");
+        let w = self.words.clone();
+        let small = |s: &str| txs(s, 12.0, c(p.muted));
+        ui.label(tx(ui, w.get("Instruction pack")));
         let (mut pack, mut profile) = (self.cfg.pack, self.cfg.profile);
         for k in Pack::ALL {
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut pack, k, k.name());
-                ui.label(small(k.note()));
+                ui.label(small(w.get(k.note())));
             });
         }
+        let same = tip(&w, ui, "This pack words its messages the same for every session");
         ui.add_enabled_ui(pack.uses_profile(), |ui| {
-            ui.horizontal_wrapped(|ui| {
-                ui.label("Session");
-                for f in [Profile::Light, Profile::Heavy] {
-                    ui.selectable_value(&mut profile, f, f.label());
-                }
-            });
+            ui.label(tx(ui, w.get("Session")));
+            for f in [Profile::Light, Profile::Heavy] {
+                ui.selectable_value(&mut profile, f, tx(ui, w.get(f.label())));
+            }
         })
         .response
-        .on_disabled_hover_text("This pack words its messages the same for every session");
+        .on_disabled_hover_text(same);
         if (pack, profile) != (self.cfg.pack, self.cfg.profile) {
             (self.cfg.pack, self.cfg.profile) = (pack, profile);
             self.apply();
@@ -397,10 +626,10 @@ impl Window {
         egui::Frame::new().fill(c(p.bg)).corner_radius(CornerRadius::same(8)).inner_margin(egui::Margin::same(10)).show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.label(RichText::new(sample).italics().color(c(p.muted)));
-            ui.label(small(if messages::after_esc(def.intent, style) { "Sent after Esc" } else { "Sent queued, no Esc" }));
+            ui.label(small(w.get(if messages::after_esc(def.intent, style) { "Sent after Esc" } else { "Sent queued, no Esc" })));
         });
         ui.add_space(4.0);
-        ui.label(RichText::new(format!("{} lines", def.name)).family(FontFamily::Name("bold".into())));
+        ui.label(txb(&w.fill("{} lines", &[def.name]), body_size(ui)));
         let custom = self.cfg.user_lines().is_some();
         let mut remove = None;
         let mut edited = false;
@@ -409,7 +638,7 @@ impl Window {
             for (i, l) in lines.iter_mut().enumerate() {
                 ui.horizontal(|ui| {
                     edited |= ui.add(egui::TextEdit::singleline(l).desired_width(ui.available_width() - 80.0)).lost_focus();
-                    if ui.small_button("Remove").clicked() {
+                    if ui.small_button(tx(ui, w.get("Remove"))).clicked() {
                         remove = Some(i);
                     }
                 });
@@ -432,24 +661,26 @@ impl Window {
             edited = true;
         }
         ui.horizontal(|ui| {
-            let r = ui.add(egui::TextEdit::singleline(&mut self.new_line).hint_text("Add your own line").desired_width(ui.available_width() - 80.0));
+            let r = ui.add(egui::TextEdit::singleline(&mut self.new_line).hint_text(tx(ui, w.get("Add your own line"))).desired_width(ui.available_width() - 80.0));
             let enter = r.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
-            if (ui.button("Add").clicked() || enter) && !self.new_line.trim().is_empty() {
+            if (ui.button(tx(ui, w.get("Add"))).clicked() || enter) && !self.new_line.trim().is_empty() {
                 let lines = self.cfg.custom_lines.entry(self.cfg.whip).or_insert_with(|| def.lines.iter().map(|s| s.to_string()).collect());
                 lines.push(self.new_line.trim().to_string());
                 self.new_line.clear();
                 edited = true;
             }
         });
-        ui.horizontal(|ui| {
-            if custom && ui.button("Back to the whip's own lines").clicked() {
+        ui.horizontal_wrapped(|ui| {
+            if custom && ui.button(tx(ui, w.get("Back to the whip's own lines"))).clicked() {
                 self.cfg.custom_lines.remove(&self.cfg.whip);
                 edited = true;
             }
-            if ui.button("Reset Claude").on_hover_text(format!("Types “{}”, then “{}”, into the window you were in (ends sticky modes)", messages::RESET, messages::RESUME)).clicked() {
+            let what = w.text("Types “{}”, then “{}”, into the window you were in (ends sticky modes)", &[messages::RESET, messages::RESUME]);
+            let hover = tip(&w, ui, &what);
+            if ui.button(tx(ui, w.get("Reset Claude"))).on_hover_text(hover).clicked() {
                 post(WM_RESET);
             }
-            ui.label(small("also switches off always-on modes such as ponytail"));
+            ui.label(small(w.get("also switches off always-on modes such as ponytail")));
         });
         if edited {
             self.apply();
@@ -457,54 +688,54 @@ impl Window {
     }
 
     fn hotkey_row(&mut self, ui: &mut egui::Ui, label: &str, which: Rec) {
+        let w = self.words.clone();
         ui.horizontal(|ui| {
-            ui.label(label);
+            ui.label(tx(ui, w.get(label)));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let r = ui.button(if self.rec == Some(which) { "Cancel" } else { "Record" });
+                let r = ui.button(tx(ui, w.get(if self.rec == Some(which) { "Cancel" } else { "Record" })));
                 if r.clicked() {
                     self.rec = if self.rec == Some(which) { None } else { Some(which) };
                     self.hint.clear();
                     r.surrender_focus();
                 }
-                let text = if self.rec == Some(which) {
-                    "Press keys…".to_string()
-                } else if which == Rec::Crack {
-                    self.cfg.crack_hotkey.clone()
+                if self.rec == Some(which) {
+                    ui.label(tx(ui, w.get("Press keys…")));
                 } else {
-                    self.cfg.toggle_hotkey.clone()
-                };
-                ui.monospace(text);
+                    ui.monospace(if which == Rec::Crack { &self.cfg.crack_hotkey } else { &self.cfg.toggle_hotkey });
+                }
             });
         });
     }
 
     fn options_card(&mut self, ui: &mut egui::Ui) {
+        let w = self.words.clone();
         let mut changed = false;
+        // a tick box's words start after its box
+        let boxed = |ui: &egui::Ui, line: &str| tx(ui, &rows(&w, ui, line, body_size(ui), ui.available_width() - 30.0));
         for (v, label) in [(&mut self.cfg.volume, "Crack volume"), (&mut self.cfg.sfx_volume, "Whip sound volume (trumpet, yeehaw, gong…)")] {
-            let r = ui.add(egui::Slider::new(v, 0.0..=1.0).text(label).show_value(false));
+            let r = ui.add(egui::Slider::new(v, 0.0..=1.0).text(tx(ui, w.get(label))).show_value(false));
             changed |= r.drag_stopped() || (r.changed() && !r.dragged());
         }
-        changed |= ui.checkbox(&mut self.cfg.rage, format!("Heat meter and full screen effect (fills in {CRACKS_TO_FULL} cracks)")).changed();
-        changed |= ui.checkbox(&mut self.cfg.swing_crack, "Crack when I snap the whip back (wind up one way, snap the other)").changed();
-        changed |= ui
-            .checkbox(&mut self.cfg.always_esc, "Always press Esc first")
-            .on_hover_text("Off: a whip that only nudges Claude is queued without Esc, so nothing Claude is doing is cancelled (the sample under Message says how the current whip is sent). Turn on if queued messages get lost.")
-            .changed();
-        changed |= ui.checkbox(&mut self.cfg.harder_ultrathink, "HARDER adds ultrathink (one turn at extra-high effort; costs more)").changed();
-        if ui.checkbox(&mut self.cfg.autostart, "Start with Windows").changed() {
+        let meter = w.text("Heat meter and full screen effect (fills in {} cracks)", &[&CRACKS_TO_FULL.to_string()]);
+        changed |= ui.checkbox(&mut self.cfg.rage, boxed(ui, &meter)).changed();
+        changed |= ui.checkbox(&mut self.cfg.swing_crack, boxed(ui, "Crack when I snap the whip back (wind up one way, snap the other)")).changed();
+        let esc = tip(&w, ui, "Off: a whip that only nudges Claude is queued without Esc, so nothing Claude is doing is cancelled (the sample under Message says how the current whip is sent). Turn on if queued messages get lost.");
+        changed |= ui.checkbox(&mut self.cfg.always_esc, boxed(ui, "Always press Esc first")).on_hover_text(esc).changed();
+        changed |= ui.checkbox(&mut self.cfg.harder_ultrathink, boxed(ui, "HARDER adds ultrathink (one turn at extra-high effort; costs more)")).changed();
+        if ui.checkbox(&mut self.cfg.autostart, boxed(ui, "Start with Windows")).changed() {
             match autostart::set(self.cfg.autostart) {
                 Ok(()) => changed = true,
                 Err(e) => {
                     // Windows keeps the real setting: the box goes back to what will happen.
                     self.cfg.autostart = !self.cfg.autostart;
-                    self.status = format!("Couldn't change start-with-Windows: {e}");
+                    self.status = w.text("Couldn't change start-with-Windows: {}", &[&e.to_string()]);
                 }
             }
         }
         ui.horizontal(|ui| {
-            ui.label("Theme");
+            ui.label(tx(ui, w.get("Theme")));
             let mut t = self.cfg.theme;
-            ui.selectable_value(&mut t, Theme::System, "System");
+            ui.selectable_value(&mut t, Theme::System, tx(ui, w.get("System")));
             ui.selectable_value(&mut t, Theme::Light, "Glacier");
             ui.selectable_value(&mut t, Theme::Dark, "Polar Night");
             if t != self.cfg.theme {
@@ -512,13 +743,105 @@ impl Window {
                 changed = true;
             }
         });
-        egui::CollapsingHeader::new("Keys a crack sends").show(ui, |ui| self.macro_editor(ui));
         if changed {
             self.apply();
         }
     }
 
+    fn about_card(&mut self, ui: &mut egui::Ui) {
+        let p = *self.pal();
+        let w = self.words.clone();
+        ui.horizontal(|ui| {
+            ui.add(egui::Image::new(&self.logos[self.dark as usize]).fit_to_exact_size(Vec2::splat(56.0)));
+            ui.vertical(|ui| {
+                ui.label(RichText::new("NJ-Whip").size(22.0).family(FontFamily::Name("display".into())));
+                ui.label(txs(&w.fill("Version {}", &[env!("CARGO_PKG_VERSION")]), body_size(ui), c(p.muted)));
+            });
+        });
+        ui.add_space(4.0);
+        ui.label(para(&w, ui, "An on-screen whip for Claude Code. Swing it, it cracks, and Claude gets one short instruction."));
+        ui.label(para(&w, ui, "Made by Nader Alzghoul (NJ-Burrito)."));
+        ui.label(para(&w, ui, "Free and open source under the MIT licence."));
+        ui.horizontal_wrapped(|ui| {
+            for (name, url) in [("Website", SITE), ("Source code", SOURCE), ("Sound credits", CREDITS), ("More tools", MORE_TOOLS)] {
+                ui.hyperlink_to(tx(ui, w.get(name)), url);
+            }
+        });
+        ui.add_space(4.0);
+        let note = "An independent project, not affiliated with Anthropic. “Claude” and “Claude Code” are trademarks of Anthropic.";
+        ui.label(para_c(&w, ui, note, 12.0, c(p.muted)));
+    }
+
+    fn updates_card(&mut self, ui: &mut egui::Ui) {
+        let p = *self.pal();
+        let w = self.words.clone();
+        let state = self.update.lock().expect("update").clone();
+        let busy = |ui: &mut egui::Ui, line: &str| {
+            ui.horizontal(|ui| {
+                ui.spinner();
+                ui.label(tx(ui, w.get(line)));
+            });
+        };
+        match &state {
+            Update::Checking => busy(ui, "Checking…"),
+            Update::Installing => busy(ui, "Downloading…"),
+            Update::Restarting => {
+                // The new copy is started and waits for this one to close.
+                busy(ui, "Restarting…");
+                app::request_quit(ui.ctx());
+            }
+            _ => {
+                ui.horizontal_wrapped(|ui| {
+                    if ui.button(tx(ui, w.get("Check for updates"))).clicked() {
+                        self.run_update(ui.ctx(), None);
+                    }
+                    if let Update::Available(v) = state {
+                        if ui.button(tx(ui, w.get("Install and restart"))).clicked() {
+                            self.run_update(ui.ctx(), Some(v));
+                        }
+                    }
+                });
+                match &state {
+                    Update::Latest => drop(ui.label(tx(ui, w.get("You have the latest version.")))),
+                    Update::Available(v) => drop(ui.label(txs(&w.fill("Version {} is available.", &[&update::dotted(*v)]), body_size(ui), c(p.accent)))),
+                    Update::Failed(what, why) => drop(ui.label(para_c(&w, ui, &w.text(what, &[why]), body_size(ui), c(RED)))),
+                    _ => {}
+                }
+            }
+        }
+        ui.label(para_c(&w, ui, "NJ-Whip goes online only when you press this button.", 12.0, c(p.muted)));
+    }
+
+    /// Checks for a newer release, or (given its version) installs it and starts it. Runs on its
+    /// own thread: the window keeps drawing and is repainted when the answer is in.
+    fn run_update(&self, ctx: &egui::Context, install: Option<update::Version>) {
+        let (slot, ctx) = (self.update.clone(), ctx.clone());
+        *slot.lock().expect("update") = if install.is_some() { Update::Installing } else { Update::Checking };
+        std::thread::spawn(move || {
+            let next = match install {
+                None => match update::check() {
+                    Ok(Some(v)) => Update::Available(v),
+                    Ok(None) => Update::Latest,
+                    Err(e) => Update::Failed("Couldn't check: {}", e),
+                },
+                Some(v) => {
+                    let done = std::env::current_exe().map_err(|e| e.to_string()).and_then(|exe| {
+                        update::install(v, &exe)?;
+                        update::restart(&exe)
+                    });
+                    match done {
+                        Ok(()) => Update::Restarting,
+                        Err(e) => Update::Failed("Couldn't install: {}", e),
+                    }
+                }
+            };
+            *slot.lock().expect("update") = next;
+            ctx.request_repaint();
+        });
+    }
+
     fn macro_editor(&mut self, ui: &mut egui::Ui) {
+        let w = self.words.clone();
         let mut act: Option<(usize, i8)> = None;
         for (i, step) in self.cfg.macro_steps.iter().enumerate() {
             ui.horizontal(|ui| {
@@ -528,7 +851,7 @@ impl Window {
                 });
                 if ui.small_button("↑").clicked() { act = Some((i, -1)); }
                 if ui.small_button("↓").clicked() { act = Some((i, 1)); }
-                if ui.small_button("Remove").clicked() { act = Some((i, 0)); }
+                if ui.small_button(tx(ui, w.get("Remove"))).clicked() { act = Some((i, 0)); }
             });
         }
         let mut changed = false;
@@ -544,12 +867,12 @@ impl Window {
         }
         ui.horizontal(|ui| {
             let recording = self.rec == Some(Rec::Macro);
-            let r = ui.button(if recording { "Done" } else { "Record keys" });
+            let r = ui.button(tx(ui, w.get(if recording { "Done" } else { "Record keys" })));
             if r.clicked() {
                 self.rec = if recording { None } else { Some(Rec::Macro) };
                 r.surrender_focus();
             }
-            if ui.button("Add {message}").clicked() {
+            if ui.button(tx(ui, w.get("Add {message}"))).clicked() {
                 self.cfg.macro_steps.push(MacroStep::Phrase);
                 changed = true;
             }
@@ -581,6 +904,9 @@ impl eframe::App for Window {
             self.cfg_stamp = at;
             // An unreadable file leaves the window as it is; the engine reports it under Problems.
             if let Ok(cfg) = cfg {
+                if cfg.lang != self.cfg.lang {
+                    self.words = Rc::new(Words::new(cfg.lang));
+                }
                 self.cfg = cfg;
             }
         }
@@ -590,58 +916,60 @@ impl eframe::App for Window {
             self.errors = read_errors();
         }
         let p = *self.pal();
-        egui::Frame::new().fill(c(p.bg)).inner_margin(egui::Margin::same(16)).show(ui, |ui| {
-            egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
-                self.header(ui);
-                ui.add_space(8.0);
-                card(&p, ui, "Whip", |ui| self.whip_picker(ui));
-                ui.add_space(8.0);
-                card(&p, ui, "Message", |ui| self.messages_card(ui));
-                ui.add_space(8.0);
-                card(&p, ui, "Hotkeys", |ui| {
-                    self.hotkey_row(ui, "Crack", Rec::Crack);
-                    self.hotkey_row(ui, "Show / hide the whip", Rec::Toggle);
-                    if !self.hint.is_empty() {
-                        ui.colored_label(c(0xE0524A), &self.hint);
-                    }
-                });
-                ui.add_space(8.0);
-                card(&p, ui, "Options", |ui| self.options_card(ui));
-                if !self.status.is_empty() || !self.errors.trim().is_empty() {
-                    ui.add_space(8.0);
-                    card(&p, ui, "Problems", |ui| {
-                        if !self.status.is_empty() {
-                            ui.colored_label(c(0xE0524A), &self.status);
-                        }
-                        if !self.errors.trim().is_empty() {
-                            ui.colored_label(c(0xE0524A), self.errors.trim_end());
-                            if ui.button("Clear").clicked() {
-                                let _ = std::fs::write(app::errors_path(), "");
-                                self.errors_stamp = error_stamp();
-                                self.errors = read_errors();
+        let w = self.words.clone();
+        let edge = |top: i8, bottom: i8| egui::Frame::new().fill(c(p.bg)).inner_margin(egui::Margin { left: 16, right: 16, top, bottom });
+        // The header (with the tab ribbon) and the footer stay; only the tab's content scrolls.
+        egui::Panel::top("header").resizable(false).show_separator_line(true).frame(edge(14, 0)).show(ui, |ui| {
+            self.header(ui);
+            ui.add_space(6.0);
+            self.tabs(ui);
+        });
+        egui::Panel::bottom("footer").resizable(false).show_separator_line(true).frame(edge(8, 10)).show(ui, |ui| self.footer(ui));
+        edge(10, 0).show(ui, |ui| {
+            egui::ScrollArea::vertical().id_salt(self.tab as u8).auto_shrink(false).show(ui, |ui| {
+                let fade = ui.ctx().animate_bool_with_time(self.tab.fade_id(), true, MOTION);
+                ui.multiply_opacity(fade);
+                ui.add_space(6.0 * (1.0 - fade));
+                self.problems(ui);
+                match self.tab {
+                    Tab::Whip => card(&p, ui, "", |ui| self.whip_picker(ui)),
+                    Tab::Message => card(&p, ui, "", |ui| self.messages_card(ui)),
+                    Tab::Hotkeys => {
+                        card(&p, ui, "", |ui| {
+                            self.hotkey_row(ui, "Crack", Rec::Crack);
+                            self.hotkey_row(ui, "Show / hide the whip", Rec::Toggle);
+                            if !self.hint.is_empty() {
+                                ui.label(para_c(&w, ui, &self.hint, body_size(ui), c(RED)));
                             }
-                        }
-                    });
+                        });
+                        ui.add_space(8.0);
+                        card(&p, ui, w.get("Keys a crack sends"), |ui| self.macro_editor(ui));
+                    }
+                    Tab::Options => card(&p, ui, "", |ui| self.options_card(ui)),
+                    Tab::About => {
+                        card(&p, ui, "", |ui| self.about_card(ui));
+                        ui.add_space(8.0);
+                        card(&p, ui, w.get("Updates"), |ui| self.updates_card(ui));
+                    }
                 }
-                ui.add_space(12.0);
-                ui.horizontal(|ui| {
-                    ui.label(RichText::new(concat!("NJ-Whip v", env!("CARGO_PKG_VERSION"), " · © 2026 NJ-Burrito · MIT")).size(12.0).color(c(p.muted)));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("Quit NJ-Whip").clicked() {
-                            app::request_quit(ui.ctx());
-                        }
-                    });
-                });
+                ui.add_space(10.0);
             });
         });
     }
 }
 
 /// Thmanyah is the house face: read from the user's fonts folder at runtime (licensed files, never
-/// embedded). Missing files fall back to egui's defaults. egui does not shape Arabic.
+/// embedded). Missing files fall back to egui's defaults, and behind those to Windows' own
+/// Segoe UI, which has the Arabic letters egui's faces lack. The window's Arabic is joined and
+/// ordered in `lang.rs`.
 fn load_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
-    let defaults = fonts.families[&FontFamily::Proportional].clone();
+    let mut defaults = fonts.families[&FontFamily::Proportional].clone();
+    let segoe = std::env::var_os("WINDIR").map(|d| std::path::PathBuf::from(d).join(r"Fonts\segoeui.ttf"));
+    if let Some(bytes) = segoe.and_then(|f| std::fs::read(f).ok()) {
+        fonts.font_data.insert("system".into(), egui::FontData::from_owned(bytes).into());
+        defaults.push("system".into());
+    }
     // A family is its Thmanyah file in front of egui's own faces.
     let mut family = |key: &str, file: &str| {
         fonts.font_data.insert(key.into(), egui::FontData::from_owned(glyphs::user_font(file)?).into());

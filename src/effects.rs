@@ -1,4 +1,6 @@
-//! Crack effects: short particle bursts, screen flashes and stamped shapes, one recipe per whip.
+//! Crack effects: short particle bursts, screen flashes and stamped shapes, one recipe per whip,
+//! and the mark each crack leaves where it landed (a puddle, a bullet hole, a cut...), which fades
+//! over `MARK_LIFE`.
 //! Pure stepping (tested) plus drawing into the overlay pixmap.
 
 use crate::whips::Effect;
@@ -7,7 +9,7 @@ use tiny_skia::{FillRule, LineCap, PathBuilder, Pixmap, Rect, Stroke, Transform}
 
 type V = (f32, f32);
 
-/// Every effect is over within this time.
+/// Every burst is over within this time (the mark it leaves stays for `MARK_LIFE`).
 #[cfg(test)]
 const MAX_LIFE: f32 = 0.9;
 
@@ -31,7 +33,17 @@ pub struct Particle {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum StampKind { Lasso, Exclaim, Ripple, Slash, Magic, Bolt, Shock }
+pub enum StampKind {
+    Lasso,
+    Exclaim,
+    Ripple,
+    Slash,
+    Magic,
+    Bolt,
+    Shock,
+    /// What a crack of this effect leaves where it landed.
+    Mark(Effect),
+}
 
 #[derive(Clone, Debug)]
 pub struct Stamp {
@@ -56,7 +68,21 @@ pub struct Fx {
     pub particles: Vec<Particle>,
     pub stamps: Vec<Stamp>,
     pub flash: Option<ScreenFlash>,
+    /// Where the last trail blob was left (None: the next `trail` call only marks the spot).
+    trail_at: Option<V>,
 }
+
+/// A trail blob fades away over this many seconds.
+pub const TRAIL_LIFE: f32 = 3.0;
+/// The mark a crack leaves fades away over this many seconds.
+pub const MARK_LIFE: f32 = 3.0;
+/// A mark only fades in place, so it is redrawn this many times a second, not every frame
+/// (the Ninja's cut runs across the whole screen).
+const MARK_FPS: f32 = 15.0;
+/// One blob per this many pixels the tip travels.
+const TRAIL_GAP: f32 = 11.0;
+/// A jump longer than this (the whip was put away and taken out elsewhere) leaves no line of blobs.
+const TRAIL_JUMP: f32 = 500.0;
 
 fn rnd(a: f32, b: f32) -> f32 {
     a + (b - a) * fastrand::f32()
@@ -90,11 +116,64 @@ impl Fx {
         !self.particles.is_empty() || !self.stamps.is_empty() || self.flash.is_some()
     }
 
+    /// A whip that leaves a trail: call every frame with its tip. Blobs are dropped along the
+    /// way the tip came, sag a little and fade over `TRAIL_LIFE`.
+    pub fn trail(&mut self, tip: V, rgb: u32) {
+        let Some(from) = self.trail_at else {
+            self.trail_at = Some(tip);
+            return;
+        };
+        let (dx, dy) = (tip.0 - from.0, tip.1 - from.1);
+        let d = dx.hypot(dy);
+        if d > TRAIL_JUMP {
+            self.trail_at = Some(tip);
+            return;
+        }
+        let n = (d / TRAIL_GAP) as usize;
+        for k in 1..=n {
+            let t = k as f32 * TRAIL_GAP / d;
+            self.particles.push(Particle {
+                pos: (from.0 + dx * t + rnd(-2.0, 2.0), from.1 + dy * t + rnd(-2.0, 2.0)),
+                vel: (0.0, rnd(2.0, 10.0)),
+                grav: 14.0,
+                drag: 0.985,
+                age: 0.0,
+                life: TRAIL_LIFE,
+                size: rnd(3.0, 6.5),
+                grow: 0.0,
+                rot: 0.0,
+                spin: 0.0,
+                rgb,
+                shape: Shape::Dot,
+            });
+        }
+        if n > 0 {
+            let t = n as f32 * TRAIL_GAP / d;
+            self.trail_at = Some((from.0 + dx * t, from.1 + dy * t));
+        }
+    }
+
+    /// The whip is away: the next trail starts fresh.
+    pub fn trail_end(&mut self) {
+        self.trail_at = None;
+    }
+
     /// Starts the effect for one crack at the whip tip `at` on a `screen` (w, h).
     pub fn burst(&mut self, effect: Effect, at: V, screen: V) {
         use Effect::*;
         let p = &mut self.particles;
         let st = &mut self.stamps;
+        // The mark is under everything else the crack throws. The Ninja's cut runs through the
+        // crack point from edge to edge; every other mark sits on the point.
+        let (from, to) = match effect {
+            Slash => {
+                let reach = screen.0.hypot(screen.1);
+                let d = (0.832 * reach, -0.555 * reach);
+                ((at.0 - d.0, at.1 - d.1), (at.0 + d.0, at.1 + d.1))
+            }
+            _ => (at, at),
+        };
+        st.push(Stamp { kind: StampKind::Mark(effect), at: from, to, age: 0.0, life: MARK_LIFE, rgb: 0 });
         let stamp = |kind, to: V, life: f32, rgb: u32| Stamp { kind, at, to, age: 0.0, life, rgb };
         match effect {
             Sparks => p.extend(ring(14, at, (260.0, 520.0), (0.18, 0.32), (2.0, 3.5), &[0xFFFFFF, 0x7FC4EC, 0x2F86C9], Shape::Spark, 0.0)),
@@ -177,6 +256,16 @@ impl Fx {
                 self.flash = None;
             }
         }
+    }
+
+    /// Is anything on the move (not only marks fading in place)?
+    pub fn moving(&self) -> bool {
+        !self.particles.is_empty() || self.flash.is_some() || self.stamps.iter().any(|s| !matches!(s.kind, StampKind::Mark(_)))
+    }
+
+    /// Changes when a mark is added, goes, or takes its next fade step.
+    pub fn mark_step(&self) -> u64 {
+        self.stamps.iter().fold(0, |h, s| h.wrapping_mul(31).wrapping_add(mark_frame(s) as u64 ^ ((s.at.0.to_bits() as u64) << 20)))
     }
 
     /// The screen flash right now: colour and strength. Drawn by the renderer as an edge glow
@@ -279,11 +368,215 @@ fn stroke_line(pm: &mut Pixmap, pts: &[V], rgb: u32, a: f32, w: f32) {
     }
 }
 
+/// The fade step a mark is on.
+fn mark_frame(s: &Stamp) -> u32 {
+    (s.age * MARK_FPS) as u32
+}
+
+fn disc(pm: &mut Pixmap, c: V, r: f32, rgb: u32, a: f32) {
+    if let Some(p) = PathBuilder::from_circle(c.0, c.1, r) {
+        pm.fill_path(&p, &paint(rgb, a), FillRule::Winding, Transform::identity(), None);
+    }
+}
+
+fn hoop(pm: &mut Pixmap, c: V, r: f32, rgb: u32, a: f32, w: f32) {
+    if let Some(p) = PathBuilder::from_circle(c.0, c.1, r) {
+        pm.stroke_path(&p, &paint(rgb, a), &Stroke { width: w, ..Stroke::default() }, Transform::identity(), None);
+    }
+}
+
+fn oval(pm: &mut Pixmap, c: V, rx: f32, ry: f32, rgb: u32, a: f32) {
+    if let Some(p) = Rect::from_xywh(c.0 - rx, c.1 - ry, rx * 2.0, ry * 2.0).and_then(PathBuilder::from_oval) {
+        pm.fill_path(&p, &paint(rgb, a), FillRule::Winding, Transform::identity(), None);
+    }
+}
+
+fn fill_poly(pm: &mut Pixmap, pts: &[V], rgb: u32, a: f32) {
+    let mut pb = PathBuilder::new();
+    pb.move_to(pts[0].0, pts[0].1);
+    for p in &pts[1..] {
+        pb.line_to(p.0, p.1);
+    }
+    pb.close();
+    if let Some(path) = pb.finish() {
+        pm.fill_path(&path, &paint(rgb, a), FillRule::Winding, Transform::identity(), None);
+    }
+}
+
+/// Points on a circle of radius `r` (or an oval `r` by `r * flat`) from angle `a0` to `a1` (radians).
+fn arc(c: V, r: f32, flat: f32, a0: f32, a1: f32, n: usize) -> Vec<V> {
+    (0..=n).map(|i| {
+        let u = a0 + (a1 - a0) * i as f32 / n as f32;
+        (c.0 + u.cos() * r, c.1 + u.sin() * r * flat)
+    }).collect()
+}
+
+/// What a crack leaves where it landed, at strength `a`. Everything stays within 60 px of the
+/// point (the Ninja's cut runs from `s.at` to `s.to`). Its random parts come from the point, so
+/// a mark looks the same on every frame.
+fn draw_mark(pm: &mut Pixmap, effect: Effect, s: &Stamp, a: f32) {
+    use std::f32::consts::{PI, TAU};
+    let c @ (x, y) = s.at;
+    let mut rng = fastrand::Rng::with_seed(((x as u64) << 20) ^ y as u64 ^ 0x9E37);
+    let mut r = |lo: f32, hi: f32| lo + (hi - lo) * rng.f32();
+    match effect {
+        // Classic: the lash's scar
+        Effect::Sparks => {
+            let ang = r(-0.7, 0.7);
+            let (dx, dy) = (ang.cos() * 40.0, ang.sin() * 40.0);
+            let pts = [(x - dx, y - dy), (x - dx * 0.3, y - dy * 0.3 - 5.0), (x + dx * 0.4, y + dy * 0.4 + 4.0), (x + dx, y + dy)];
+            stroke_line(pm, &pts, 0x0E1730, a * 0.7, 6.0);
+            stroke_line(pm, &pts, 0x7FC4EC, a * 0.9, 2.0);
+        }
+        // Neon: a ring of light
+        Effect::Flash => {
+            hoop(pm, c, 30.0, 0x33D6FF, a * 0.22, 10.0);
+            hoop(pm, c, 30.0, 0x33D6FF, a * 0.9, 3.0);
+            hoop(pm, c, 20.0, 0xFF5BD7, a * 0.7, 2.0);
+        }
+        // Elephant: a cracked dent
+        Effect::Thump => {
+            oval(pm, c, 37.0, 16.5, 0xB8B0A2, a * 0.5);
+            oval(pm, c, 34.0, 14.0, 0x2A2C31, a * 0.75);
+            for k in 0..6 {
+                let ang = k as f32 * TAU / 6.0 + r(-0.3, 0.3);
+                let len = r(40.0, 56.0);
+                stroke_line(pm, &[(x + ang.cos() * 20.0, y + ang.sin() * 8.0), (x + ang.cos() * len, y + ang.sin() * len * 0.45)], 0xB8B0A2, a * 0.5, 4.5);
+                stroke_line(pm, &[(x + ang.cos() * 20.0, y + ang.sin() * 8.0), (x + ang.cos() * len, y + ang.sin() * len * 0.45)], 0x2A2C31, a * 0.8, 2.5);
+            }
+        }
+        // Cowboy: a horseshoe print
+        Effect::Lasso => {
+            let shoe = arc(c, 24.0, 1.15, 0.75 * PI, 2.25 * PI, 24);
+            stroke_line(pm, &shoe, 0x3A2A1C, a * 0.6, 10.0);
+            stroke_line(pm, &shoe, 0xB97A43, a * 0.9, 6.0);
+        }
+        // Cheerleader: a star
+        Effect::Confetti => {
+            let rot = r(0.0, TAU);
+            let mut star: Vec<V> = (0..10).map(|k| {
+                let (ang, rad) = (rot + k as f32 * PI / 5.0, if k % 2 == 0 { 32.0 } else { 14.0 });
+                (x + ang.cos() * rad, y + ang.sin() * rad)
+            }).collect();
+            star.push(star[0]);
+            fill_poly(pm, &star, 0xFFD25A, a * 0.35);
+            stroke_line(pm, &star, 0xFF8CC6, a, 3.0);
+        }
+        // Sauce: a puddle
+        Effect::Splash => {
+            oval(pm, (x, y + 6.0), 40.0, 16.0, 0xB52A15, a * 0.85);
+            oval(pm, (x - 4.0, y + 4.0), 30.0, 11.0, 0xD93A22, a);
+            for (dx, dy, rad) in [(38.0, 12.0, 7.0), (-36.0, 2.0, 5.0), (12.0, 22.0, 6.0)] {
+                disc(pm, (x + dx, y + dy), rad, 0xD93A22, a);
+            }
+            oval(pm, (x - 10.0, y), 10.0, 3.0, 0xFFB3A0, a * 0.7);
+        }
+        // Drill Sergeant: a bullet hole
+        Effect::Exclaim => {
+            for _ in 0..6 {
+                let (ang, len) = (r(0.0, TAU), r(20.0, 36.0));
+                stroke_line(pm, &[(x + ang.cos() * 11.0, y + ang.sin() * 11.0), (x + ang.cos() * len, y + ang.sin() * len)], 0xC8CCD2, a * 0.6, 3.2);
+                stroke_line(pm, &[(x + ang.cos() * 11.0, y + ang.sin() * 11.0), (x + ang.cos() * len, y + ang.sin() * len)], 0x1E1F24, a * 0.8, 1.6);
+            }
+            hoop(pm, c, 11.0, 0x9AA0A8, a * 0.85, 2.5);
+            disc(pm, c, 9.5, 0x0B0C0E, a * 0.95);
+        }
+        // Zen: a brushed ink circle, left open
+        Effect::Ripple => {
+            let start = r(0.0, TAU);
+            stroke_line(pm, &arc(c, 32.0, 1.0, start, start + 1.8 * PI, 40), 0xFFFFFF, a * 0.4, 9.0);
+            stroke_line(pm, &arc(c, 32.0, 1.0, start, start + 1.8 * PI, 40), 0x2B2F3D, a * 0.9, 6.0);
+            stroke_line(pm, &arc(c, 29.0, 1.0, start + 0.3, start + 1.5 * PI, 30), 0x2B2F3D, a * 0.45, 2.5);
+        }
+        // Ninja: a cut across the screen
+        Effect::Slash => {
+            stroke_line(pm, &[s.at, s.to], 0x0B0C0E, a * 0.5, 5.0);
+            stroke_line(pm, &[s.at, s.to], 0xFFFFFF, a * 0.9, 1.6);
+        }
+        // Pirate: X marks the spot
+        Effect::Spray => {
+            for sign in [-1.0, 1.0] {
+                stroke_line(pm, &[(x - 24.0, y - 24.0 * sign), (x + 24.0, y + 24.0 * sign)], 0x5A120E, a * 0.5, 10.0);
+                stroke_line(pm, &[(x - 24.0, y - 24.0 * sign), (x + 24.0, y + 24.0 * sign)], 0xC0271E, a * 0.95, 6.0);
+            }
+        }
+        // Chef: a fried egg
+        Effect::Sizzle => {
+            oval(pm, c, 30.0, 22.0, 0xFFFDF5, a * 0.95);
+            disc(pm, (x + 22.0, y + 10.0), 12.0, 0xFFFDF5, a * 0.95);
+            disc(pm, (x - 20.0, y - 8.0), 11.0, 0xFFFDF5, a * 0.95);
+            disc(pm, (x + 3.0, y - 1.0), 11.0, 0xFFB21E, a);
+            disc(pm, (x - 1.0, y - 5.0), 3.0, 0xFFE9A8, a);
+        }
+        // Wizard: a rune
+        Effect::Magic => {
+            hoop(pm, c, 34.0, 0xB89CFF, a * 0.8, 1.8);
+            hoop(pm, c, 27.0, 0xB89CFF, a * 0.5, 1.0);
+            let rot = r(0.0, TAU);
+            let tri: Vec<V> = (0..=3).map(|k| {
+                let ang = rot + k as f32 * TAU / 3.0;
+                (x + ang.cos() * 27.0, y + ang.sin() * 27.0)
+            }).collect();
+            stroke_line(pm, &tri, 0xFFD25A, a * 0.8, 1.6);
+        }
+        // Vine: leaves and a flower
+        Effect::Petals => {
+            for k in 0..3 {
+                let ang = -PI / 2.0 + (k as f32 - 1.0) * 0.9 + r(-0.15, 0.15);
+                let (tip, mid) = ((x + ang.cos() * 36.0, y + ang.sin() * 36.0), (x + ang.cos() * 18.0, y + ang.sin() * 18.0));
+                let side = (-ang.sin() * 10.0, ang.cos() * 10.0);
+                let mut pb = PathBuilder::new();
+                pb.move_to(x, y);
+                pb.quad_to(mid.0 + side.0, mid.1 + side.1, tip.0, tip.1);
+                pb.quad_to(mid.0 - side.0, mid.1 - side.1, x, y);
+                if let Some(leaf) = pb.finish() {
+                    pm.fill_path(&leaf, &paint(0x5FA84A, a * 0.9), FillRule::Winding, Transform::identity(), None);
+                }
+                stroke_line(pm, &[c, tip], 0x2F6B2A, a * 0.7, 1.2);
+            }
+            disc(pm, c, 6.0, 0xFF9EC0, a);
+            disc(pm, c, 2.5, 0xFFE9A8, a);
+        }
+        // Penguin: a pile of snow
+        Effect::Snow => {
+            let mut pb = PathBuilder::new();
+            pb.move_to(x - 36.0, y + 10.0);
+            pb.cubic_to(x - 30.0, y - 20.0, x + 30.0, y - 20.0, x + 36.0, y + 10.0);
+            pb.close();
+            if let Some(pile) = pb.finish() {
+                pm.fill_path(&pile, &paint(0xF4F8FF, a * 0.95), FillRule::Winding, Transform::identity(), None);
+            }
+            stroke_line(pm, &[(x - 36.0, y + 10.0), (x + 36.0, y + 10.0)], 0xB9CCE6, a * 0.8, 2.0);
+            disc(pm, (x - 44.0, y + 7.0), 4.0, 0xF4F8FF, a * 0.95);
+            disc(pm, (x + 46.0, y + 8.0), 3.0, 0xF4F8FF, a * 0.95);
+        }
+        // Storm: a scorch
+        Effect::Lightning => {
+            let burn: Vec<V> = (0..12).map(|k| {
+                let (ang, rad) = (k as f32 * TAU / 12.0, if k % 2 == 0 { r(28.0, 40.0) } else { r(12.0, 18.0) });
+                (x + ang.cos() * rad, y + ang.sin() * rad)
+            }).collect();
+            fill_poly(pm, &burn, 0x15171C, a * 0.8);
+            let mut edge = burn.clone();
+            edge.push(burn[0]);
+            stroke_line(pm, &edge, 0xFF9A3C, a * 0.6, 1.5);
+            hoop(pm, c, 12.0, 0xFF9A3C, a * 0.7, 2.5);
+            disc(pm, c, 4.0, 0xFFE680, a * 0.8);
+        }
+    }
+}
+
 fn draw_stamp(pm: &mut Pixmap, s: &Stamp) {
+    if let StampKind::Mark(effect) = s.kind {
+        // a mark fades in steps (see MARK_FPS)
+        let t = (mark_frame(s) as f32 / MARK_FPS / s.life).min(1.0);
+        return draw_mark(pm, effect, s, 1.0 - t);
+    }
     let t = (s.age / s.life).clamp(0.0, 1.0);
     let a = 1.0 - t;
     let (x, y) = s.at;
     match s.kind {
+        StampKind::Mark(_) => {}
         StampKind::Shock => {
             for k in 0..3 {
                 let ang = -0.6 + k as f32 * 0.6;
@@ -373,18 +666,79 @@ mod tests {
     use crate::whips::CATALOGUE;
 
     #[test]
+    fn a_trail_follows_the_tip_and_fades_in_three_seconds() {
+        let mut fx = Fx::default();
+        fx.trail((100.0, 100.0), 0xD93A22);
+        assert!(!fx.alive(), "the first call only marks the spot");
+        fx.trail((100.0 + TRAIL_GAP * 10.5, 100.0), 0xD93A22);
+        assert_eq!(fx.particles.len(), 10);
+        fx.trail((5000.0, 100.0), 0xD93A22);
+        assert_eq!(fx.particles.len(), 10, "a jump leaves no line");
+        for _ in 0..(TRAIL_LIFE * 60.0) as usize - 2 {
+            fx.step(1.0 / 60.0);
+        }
+        assert!(fx.alive());
+        for _ in 0..4 {
+            fx.step(1.0 / 60.0);
+        }
+        assert!(!fx.alive());
+    }
+
+    #[test]
     fn every_whip_effect_starts_and_ends_in_time() {
         for w in &CATALOGUE {
             let mut fx = Fx::default();
             fx.burst(w.effect, (500.0, 400.0), (1920.0, 1080.0));
             assert!(fx.alive(), "{}", w.name);
             let mut t = 0.0;
-            while fx.alive() && t < 2.0 {
+            while fx.moving() && t < 2.0 {
                 fx.step(1.0 / 60.0);
                 t += 1.0 / 60.0;
             }
-            assert!(!fx.alive() && t <= MAX_LIFE + 0.02, "{} lasted {t}", w.name);
+            assert!(!fx.moving() && t <= MAX_LIFE + 0.02, "{} lasted {t}", w.name);
         }
+    }
+
+    #[test]
+    fn every_crack_leaves_a_mark_that_fades_in_three_seconds() {
+        for w in &CATALOGUE {
+            let mut fx = Fx::default();
+            fx.burst(w.effect, (500.0, 400.0), (1920.0, 1080.0));
+            let mut steps = std::collections::HashSet::new();
+            for _ in 0..(MARK_LIFE * 60.0) as usize - 2 {
+                fx.step(1.0 / 60.0);
+                steps.insert(fx.mark_step());
+            }
+            assert!(fx.alive(), "{}: the mark is gone early", w.name);
+            // only the mark is left, and it is drawn: fading in MARK_FPS steps a second
+            assert!(!fx.moving(), "{}", w.name);
+            let mut pm = Pixmap::new(1920, 1080).unwrap();
+            fx.draw(&mut pm);
+            assert!(pm.pixels().iter().any(|p| p.alpha() > 0), "{}: nothing drawn", w.name);
+            assert!((40..=46).contains(&steps.len()), "{}: {} fade steps", w.name, steps.len());
+            for _ in 0..4 {
+                fx.step(1.0 / 60.0);
+            }
+            assert!(!fx.alive(), "{}: the mark stays", w.name);
+        }
+    }
+
+    /// Every whip's mark on one sheet, to look at: `cargo test --release marks_sheet -- --ignored`
+    /// writes target/marks.png (catalogue order, five to a row, one second after the crack).
+    #[test]
+    #[ignore]
+    fn marks_sheet() {
+        let mut pm = Pixmap::new(1100, 540).unwrap();
+        pm.fill(crate::ink::col(0x0A1024, 1.0));
+        let mut fx = Fx::default();
+        for (k, w) in CATALOGUE.iter().enumerate() {
+            fx.burst(w.effect, (110.0 + (k % 5) as f32 * 220.0, 90.0 + (k / 5) as f32 * 180.0), (1100.0, 540.0));
+        }
+        for _ in 0..60 {
+            fx.step(1.0 / 60.0);
+        }
+        fx.draw(&mut pm);
+        pm.save_png("target/marks.png").unwrap();
     }
 
     #[test]
