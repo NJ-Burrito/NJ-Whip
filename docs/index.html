@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-bO9ylY4plr76WmPMtJxA9251nkxg8qfLmNE6kxeeOA4='; style-src 'self'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0A1024" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EEF6FB" media="(prefers-color-scheme: light)">
+<title>NJ-Whip by Nader Alzghoul: a free on-screen whip for Claude Code</title>
+<meta name="description" content="NJ-Whip is a free, open-source on-screen whip for Claude Code on Windows. Crack it and it types one short instruction. By Nader Alzghoul (NJ-Burrito).">
+<link rel="canonical" href="https://nj-burrito.github.io/NJ-Whip/">
+<link rel="alternate" hreflang="en" href="https://nj-burrito.github.io/NJ-Whip/">
+<link rel="alternate" hreflang="ar" href="https://nj-burrito.github.io/NJ-Whip/ar/">
+<link rel="alternate" hreflang="x-default" href="https://nj-burrito.github.io/NJ-Whip/">
+<meta name="author" content="Nader Alzghoul (NJ-Burrito)">
+<link rel="author" href="https://nj-burrito.github.io/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NJ-Whip">
+<meta property="og:url" content="https://nj-burrito.github.io/NJ-Whip/">
+<meta property="og:title" content="NJ-Whip: a free on-screen whip for Claude Code">
+<meta property="og:description" content="Press Ctrl+Alt+Q and the whip is on your mouse. Crack it and it types one short instruction for Claude Code. Free, MIT, Windows.">
+<meta property="og:image" content="https://nj-burrito.github.io/NJ-Whip/assets/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Neon whip mid-swing on a dark screen, a full heat meter, the screen edges glowing blue and the combo label ZAP ×2.">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ar_AR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NJ-Whip: a free on-screen whip for Claude Code">
+<meta name="twitter:description" content="Press Ctrl+Alt+Q and the whip is on your mouse. Crack it and it types one short instruction for Claude Code. Free, MIT, Windows.">
+<meta name="twitter:image" content="https://nj-burrito.github.io/NJ-Whip/assets/og.png">
+<meta name="twitter:image:alt" content="The Neon whip mid-swing on a dark screen, a full heat meter, the screen edges glowing blue and the combo label ZAP ×2.">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo.png">
+<link rel="sitemap" type="application/xml" href="sitemap.xml">
+<link rel="alternate" type="text/plain" href="llms.txt" title="llms.txt">
+<link rel="preload" href="/fonts/thmanyahsans-Medium.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/thmanyahserifdisplay-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"WebSite","@id":"https://nj-burrito.github.io/NJ-Whip/#website","name":"NJ-Whip","url":"https://nj-burrito.github.io/NJ-Whip/","inLanguage":["en","ar"],"publisher":{"@id":"https://nj-burrito.github.io/#person"}},
+{"@type":"Person","@id":"https://nj-burrito.github.io/#person","name":"Nader Alzghoul","alternateName":["NJ-Burrito","نادر الزغول"],"url":"https://nj-burrito.github.io/"},
+{"@type":"SoftwareApplication","@id":"https://nj-burrito.github.io/NJ-Whip/#app","name":"NJ-Whip","description":"A free, open-source on-screen whip for Claude Code on Windows. Crack it by swinging, by clicking or with a hotkey, and it types one short instruction into the window you were in last.","applicationCategory":"DeveloperApplication","operatingSystem":"Windows 10 version 2004 or later","softwareVersion":"0.3.0","url":"https://nj-burrito.github.io/NJ-Whip/","downloadUrl":"https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe","codeRepository":"https://github.com/NJ-Burrito/NJ-Whip","sameAs":["https://github.com/NJ-Burrito/NJ-Whip"],"license":"https://opensource.org/licenses/MIT","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"inLanguage":"en","image":"https://nj-burrito.github.io/NJ-Whip/assets/og.png","screenshot":"https://nj-burrito.github.io/NJ-Whip/assets/settings.png","author":{"@id":"https://nj-burrito.github.io/#person"}}
+]}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="NJ-Whip home"><img src="assets/logo.png" alt="" width="256" height="256">NJ-Whip</a>
+    <nav aria-label="Page">
+      <a href="#how">How it works</a>
+      <a href="#whips">Whips</a>
+      <a href="#messages">Messages</a>
+      <a href="#notes">Honest notes</a>
+      <a class="lang" href="ar/" hreflang="ar" lang="ar">العربية</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <h1>An <span class="nw">on-screen</span> whip for <span class="nw">Claude Code</span></h1>
+      <p class="lede">Press <span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd></span> and the whip is on your mouse. Crack it, and it types one short instruction into the window you were in last.</p>
+      <div class="actions">
+        <a class="btn" href="https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>Download NJ-Whip.exe</a>
+        <a class="btn quiet" href="https://github.com/NJ-Burrito/NJ-Whip">Source code</a>
+      </div>
+      <p class="fine">Free and open source under the MIT licence. One small exe, about 6.5 MB, no installer. For Windows 10 2004 or later. Version 0.3.0.</p>
+    </div>
+    <figure class="screen">
+      <video autoplay muted loop playsinline controls preload="metadata" width="1280" height="720" aria-label="NJ-Whip demo: a whip swings and cracks on a dark screen, the heat meter fills, the screen edges glow and a combo label appears.">
+        <source src="assets/demo.mp4" type="video/mp4">
+        <a href="assets/demo.gif">Watch the demo as a GIF</a>
+      </video>
+      <figcaption>Four whips in turn: Classic, Neon, Cheerleader and Storm. The clip has no sound.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="head">
+      <h2>How it works</h2>
+    </div>
+    <ol class="steps">
+      <li>
+        <h3>Call it</h3>
+        <p>Press <span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd></span> and the whip is on your mouse.</p>
+      </li>
+      <li>
+        <h3>Crack it</h3>
+        <p>Swing it: wind up one way, then snap back the other. A lazy back-and-forth only whooshes, and each snap cracks once. You can also click, or press <span class="keys"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>W</kbd></span>.</p>
+      </li>
+      <li>
+        <h3>It types for you</h3>
+        <p>A crack plays the whip's sound and effect. Then it types one short message into the window you were in last: the whip's fun line plus a real instruction, then <span class="keys"><kbd>Enter</kbd></span>.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="whips">
+  <div class="wrap">
+    <div class="head">
+      <h2>15 whips, five directions</h2>
+      <p>Each whip steers Claude in one of five directions: Faster, Harder, Careful, Happier or Focus.</p>
+      <p>Each whip has its own look, tip, weight, crack effect and lines. A heavy whip trails your hand. A light one answers at once.</p>
+      <p>Any whip can carry your own picture as its tip. The picture is stored only on your computer.</p>
+    </div>
+    <figure class="screen gallery">
+      <div class="scroll" dir="ltr" tabindex="0" role="region" aria-label="All 15 whips">
+        <img src="assets/gallery.png" alt="All 15 whips, each in its own colours: Classic, Neon, Elephant, Cowboy, Cheerleader, Sauce, Drill Sergeant, Zen, Ninja, Pirate, Chef, Wizard, Vine, Penguin and Storm." width="2000" height="810" loading="lazy">
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section id="heat">
+  <div class="wrap split">
+    <div class="prose">
+      <h2>Keep cracking and the screen warms up</h2>
+      <p>The heat meter fills in 4 cracks. It drains about a second after the last one.</p>
+      <p>At full heat, the screen edges glow softly in the whip's own colour and style. The glow is never red, and the screen never shakes.</p>
+      <p>A streak shows a combo label such as <bdi>STOMP ×3</bdi>.</p>
+    </div>
+    <fieldset class="rack">
+      <legend>Pick a whip to see its glow</legend>
+      <div class="stage" dir="ltr" aria-hidden="true">
+        <div class="meter"><span></span><span></span><span></span><span></span></div>
+        <div class="combo"> ×3</div>
+        <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid meet" focusable="false">
+          <path class="lash" stroke-width="5" d="M232 300C290 236 360 292 430 250S520 196 548 150"/>
+          <path class="grip" stroke-width="13" d="M176 352 232 300"/>
+          <circle class="tip" cx="548" cy="150" r="9"/>
+          <circle class="tip" cx="172" cy="356" r="11"/>
+        </svg>
+      </div>
+      <div class="chips" dir="ltr">
+        <label class="chip w-classic"><input type="radio" name="whip" value="classic" checked><span>Classic</span></label>
+        <label class="chip w-neon"><input type="radio" name="whip" value="neon"><span>Neon</span></label>
+        <label class="chip w-elephant"><input type="radio" name="whip" value="elephant"><span>Elephant</span></label>
+        <label class="chip w-cowboy"><input type="radio" name="whip" value="cowboy"><span>Cowboy</span></label>
+        <label class="chip w-cheerleader"><input type="radio" name="whip" value="cheerleader"><span>Cheerleader</span></label>
+        <label class="chip w-sauce"><input type="radio" name="whip" value="sauce"><span>Sauce</span></label>
+        <label class="chip w-drill"><input type="radio" name="whip" value="drill-sergeant"><span>Drill Sergeant</span></label>
+        <label class="chip w-zen"><input type="radio" name="whip" value="zen"><span>Zen</span></label>
+        <label class="chip w-ninja"><input type="radio" name="whip" value="ninja"><span>Ninja</span></label>
+        <label class="chip w-pirate"><input type="radio" name="whip" value="pirate"><span>Pirate</span></label>
+        <label class="chip w-chef"><input type="radio" name="whip" value="chef"><span>Chef</span></label>
+        <label class="chip w-wizard"><input type="radio" name="whip" value="wizard"><span>Wizard</span></label>
+        <label class="chip w-vine"><input type="radio" name="whip" value="vine"><span>Vine</span></label>
+        <label class="chip w-penguin"><input type="radio" name="whip" value="penguin"><span>Penguin</span></label>
+        <label class="chip w-storm"><input type="radio" name="whip" value="storm"><span>Storm</span></label>
+      </div>
+    </fieldset>
+  </div>
+</section>
+
+<section id="messages">
+  <div class="wrap split narrow-media">
+    <div class="prose">
+      <h2>What a crack types</h2>
+      <p>Choose one of six instruction packs.</p>
+      <ul class="packs">
+        <li>Plain</li>
+        <li>nj-kit</li>
+        <li>Surgical</li>
+        <li>Quiet</li>
+        <li>Superpowers</li>
+        <li>Plan-first</li>
+      </ul>
+      <dl class="rules">
+        <div>
+          <dt>Faster, Harder and Happier</dt>
+          <dd>These lines are queued without <span class="keys"><kbd>Esc</kbd></span>, so nothing Claude is doing is cancelled.</dd>
+        </div>
+        <div>
+          <dt>Careful and Focus</dt>
+          <dd>These lines are sent after <span class="keys"><kbd>Esc</kbd></span>, so Claude stops before its next step.</dd>
+        </div>
+      </dl>
+      <p>You can add your own lines and change the keys a crack sends.</p>
+      <p>A <strong>Reset Claude</strong> button types "normal mode", then "Continue.".</p>
+    </div>
+    <figure class="screen shot">
+      <img src="assets/settings.png" alt="The NJ-Whip Settings window: an on and off switch at the top and a grid of whips to choose from, with Classic selected." width="696" height="984" loading="lazy">
+      <figcaption>The Settings window, where you pick a whip.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="where">
+  <div class="wrap">
+    <div class="head">
+      <h2>Made for Claude Code, wherever you type to it</h2>
+      <p>NJ-Whip types into whatever window you were in last. So it is made for Claude Code wherever you type to it: the VS Code panel, a terminal, the Claude desktop app, or claude.ai/code.</p>
+    </div>
+  </div>
+</section>
+
+<section id="notes">
+  <div class="wrap">
+    <div class="head">
+      <h2>Honest notes</h2>
+    </div>
+    <ul class="notes">
+      <li><p>A crack types into whatever window you were in last, a code editor included.</p></li>
+      <li><p>The exe is not code-signed, so Windows SmartScreen may ask before the first run.</p></li>
+      <li><p>The instruction wording has not been measured on live sessions.</p></li>
+      <li><p>0.3.0 is an early release; not every one of these places (the VS Code panel, a terminal, the Claude desktop app, claude.ai/code) has been hand-tested yet.</p></li>
+      <li><p>NJ-Whip is not affiliated with Anthropic.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap">
+    <h2>Privacy</h2>
+    <p class="plain">No account. No network calls. No telemetry.</p>
+    <div class="prose">
+      <p>Your settings live in one file on your computer:</p>
+      <p><code>%APPDATA%\NJ-Whip\config.toml</code></p>
+    </div>
+  </div>
+</section>
+
+<section id="download" class="get">
+  <div class="wrap">
+    <div class="box">
+      <h2>Get NJ-Whip</h2>
+      <p>One small exe, about 6.5 MB. No installer. For Windows 10 2004 or later. Version 0.3.0, written in Rust, free under the MIT licence.</p>
+      <div class="actions">
+        <a class="btn" href="https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>Download NJ-Whip.exe</a>
+        <a class="btn quiet" href="https://github.com/NJ-Burrito/NJ-Whip/releases/latest">All releases</a>
+        <a class="btn quiet" href="https://github.com/NJ-Burrito/NJ-Whip">Source code</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>By <a href="https://nj-burrito.github.io/">Nader Alzghoul (NJ-Burrito)</a>. Free and open source under the MIT licence. Not affiliated with Anthropic.</p>
+    <nav aria-label="More from the same author">
+      <a href="https://nj-burrito.github.io/">Portfolio</a>
+      <a href="https://nj-burrito.github.io/QA-Wrap/">QA-Wrap</a>
+      <a href="https://nj-burrito.github.io/NJ-Kit/">NJ-Kit</a>
+      <a href="https://nj-burrito.github.io/Profile-Wrap/">Profile-Wrap</a>
+      <a href="https://nj-burrito.github.io/Business-Wrap/">Business-Wrap</a>
+      <a href="https://nj-burrito.github.io/story-wrap/">Story-Wrap</a>
+      <a href="https://github.com/NJ-Burrito/NJ-Whip">GitHub</a>
+      <a href="ar/" hreflang="ar" lang="ar">العربية</a>
+    </nav>
+  </div>
+</footer>
+
+<script>(function(){var v=document.querySelector("video");if(v&&matchMedia("(prefers-reduced-motion: reduce)").matches){v.removeAttribute("autoplay");v.pause()}})()</script>
+</body>
+</html>

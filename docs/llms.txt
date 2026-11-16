@@ -1,0 +1,42 @@
+# NJ-Whip
+
+> NJ-Whip is a free, open-source on-screen whip for Claude Code on Windows. Press Ctrl+Alt+Q and the whip is on your mouse. Crack it and it types one short instruction into the window you were in last. MIT licence, written in Rust, by Nader Alzghoul (NJ-Burrito). Independent project, not affiliated with Anthropic.
+
+- [Website, English](https://nj-burrito.github.io/NJ-Whip/): how it works, the 15 whips, the heat meter, what a crack types, honest notes, privacy, download
+- [Website, Arabic](https://nj-burrito.github.io/NJ-Whip/ar/): the same page in Arabic
+- [Download NJ-Whip.exe](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe): one small exe, about 6.5 MB, no installer
+- [All releases](https://github.com/NJ-Burrito/NJ-Whip/releases/latest): version 0.3.0 at the time of writing
+- [Source code](https://github.com/NJ-Burrito/NJ-Whip): Rust source, README, MIT licence
+
+## Answers
+
+- What is NJ-Whip? A free, open-source on-screen whip for Claude Code on Windows. A crack types one short instruction for Claude.
+- How do I use it? Press Ctrl+Alt+Q and the whip is on your mouse. Crack it by swinging (wind up one way, snap back the other), by clicking, or with Ctrl+Alt+W. A lazy back-and-forth only whooshes, and each snap cracks once.
+- What does a crack do? It plays the whip's sound and effect, then types one short message into the window you were in last: the whip's fun line plus a real instruction, then Enter.
+- What are the five directions? Faster, Harder, Careful, Happier and Focus. Each whip steers one of them.
+- Which whips are there? 15: Classic, Neon, Elephant, Cowboy, Cheerleader, Sauce, Drill Sergeant, Zen, Ninja, Pirate, Chef, Wizard, Vine, Penguin and Storm. Each has its own look, tip, weight, crack effect and lines. A heavy whip trails the hand and a light one answers at once. Any whip can carry your own picture as its tip, stored only on your computer.
+- What is the heat meter? It fills in 4 cracks and drains about a second after the last one. At full heat the screen edges glow softly in the whip's own colour and style, never red, with no screen shake. A streak shows a combo label such as "STOMP ×3".
+- Which instruction packs are there? Six: Plain, nj-kit, Surgical, Quiet, Superpowers and Plan-first. You can add your own lines and change the keys a crack sends.
+- Does a crack interrupt Claude? Faster, Harder and Happier lines are queued without Esc, so nothing Claude is doing is cancelled. Careful and Focus lines are sent after Esc, so Claude stops before its next step.
+- What does the "Reset Claude" button do? It types "normal mode", then "Continue.".
+- Where does it type? Into whatever window you were in last. So it is made for Claude Code wherever you type to it: the VS Code panel, a terminal, the Claude desktop app, or claude.ai/code.
+- What does it need? Windows 10 2004 or later. One small exe, about 6.5 MB, no installer.
+- Privacy: no account, no network calls, no telemetry. Settings live in %APPDATA%\NJ-Whip\config.toml.
+- Licence and price: MIT, free.
+- Is NJ-Whip made by Anthropic? No. It is an independent project by Nader Alzghoul, not affiliated with Anthropic.
+
+## Honest notes
+
+- A crack types into whatever window you were in last, a code editor included.
+- The exe is not code-signed, so Windows SmartScreen may ask before the first run.
+- The instruction wording has not been measured on live sessions.
+- 0.3.0 is an early release; not every one of these places (the VS Code panel, a terminal, the Claude desktop app, claude.ai/code) has been hand-tested yet.
+
+## Related
+
+- [Nader Alzghoul (NJ-Burrito)](https://nj-burrito.github.io/): the author
+- [QA-Wrap](https://nj-burrito.github.io/QA-Wrap/): by the same author
+- [NJ-Kit](https://nj-burrito.github.io/NJ-Kit/): by the same author
+- [Profile-Wrap](https://nj-burrito.github.io/Profile-Wrap/): by the same author
+- [Business-Wrap](https://nj-burrito.github.io/Business-Wrap/): by the same author
+- [Story-Wrap](https://nj-burrito.github.io/story-wrap/): by the same author

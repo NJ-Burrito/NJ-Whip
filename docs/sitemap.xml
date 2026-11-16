@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://nj-burrito.github.io/NJ-Whip/</loc>
+    <lastmod>2026-11-16</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://nj-burrito.github.io/NJ-Whip/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://nj-burrito.github.io/NJ-Whip/ar/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://nj-burrito.github.io/NJ-Whip/"/>
+    <image:image><image:loc>https://nj-burrito.github.io/NJ-Whip/assets/og.png</image:loc><image:title>NJ-Whip: a free on-screen whip for Claude Code</image:title></image:image>
+    <image:image><image:loc>https://nj-burrito.github.io/NJ-Whip/assets/gallery.png</image:loc><image:title>All 15 NJ-Whip whips</image:title></image:image>
+    <image:image><image:loc>https://nj-burrito.github.io/NJ-Whip/assets/settings.png</image:loc><image:title>The NJ-Whip Settings window</image:title></image:image>
+  </url>
+  <url>
+    <loc>https://nj-burrito.github.io/NJ-Whip/ar/</loc>
+    <lastmod>2026-11-16</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://nj-burrito.github.io/NJ-Whip/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://nj-burrito.github.io/NJ-Whip/ar/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://nj-burrito.github.io/NJ-Whip/"/>
+    <image:image><image:loc>https://nj-burrito.github.io/NJ-Whip/assets/og.png</image:loc><image:title>NJ-Whip: سوط مجاني على الشاشة لـ Claude Code</image:title></image:image>
+  </url>
+</urlset>
