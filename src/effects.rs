@@ -1,0 +1,421 @@
+//! Crack effects: short particle bursts, screen flashes and stamped shapes, one recipe per whip.
+//! Pure stepping (tested) plus drawing into the overlay pixmap.
+
+use crate::whips::Effect;
+use crate::ink::paint;
+use tiny_skia::{FillRule, LineCap, PathBuilder, Pixmap, Rect, Stroke, Transform};
+
+type V = (f32, f32);
+
+/// Every effect is over within this time.
+#[cfg(test)]
+const MAX_LIFE: f32 = 0.9;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Shape { Dot, Chip, Petal, Star, Drop, Puff, Spark }
+
+#[derive(Clone, Debug)]
+pub struct Particle {
+    pub pos: V,
+    pub vel: V,
+    pub grav: f32,
+    pub drag: f32,
+    pub age: f32,
+    pub life: f32,
+    pub size: f32,
+    pub grow: f32,
+    pub rot: f32,
+    pub spin: f32,
+    pub rgb: u32,
+    pub shape: Shape,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum StampKind { Lasso, Exclaim, Ripple, Slash, Magic, Bolt, Shock }
+
+#[derive(Clone, Debug)]
+pub struct Stamp {
+    pub kind: StampKind,
+    pub at: V,
+    pub to: V,
+    pub age: f32,
+    pub life: f32,
+    pub rgb: u32,
+}
+
+#[derive(Clone, Debug)]
+pub struct ScreenFlash {
+    pub colours: Vec<u32>,
+    pub alpha: f32,
+    pub age: f32,
+    pub life: f32,
+}
+
+#[derive(Default)]
+pub struct Fx {
+    pub particles: Vec<Particle>,
+    pub stamps: Vec<Stamp>,
+    pub flash: Option<ScreenFlash>,
+}
+
+fn rnd(a: f32, b: f32) -> f32 {
+    a + (b - a) * fastrand::f32()
+}
+
+fn ring(n: usize, at: V, speed: (f32, f32), life: (f32, f32), size: (f32, f32), colours: &[u32], shape: Shape, grav: f32) -> Vec<Particle> {
+    (0..n)
+        .map(|k| {
+            let a = rnd(0.0, std::f32::consts::TAU);
+            let s = rnd(speed.0, speed.1);
+            Particle {
+                pos: at,
+                vel: (a.cos() * s, a.sin() * s),
+                grav,
+                drag: 0.9,
+                age: 0.0,
+                life: rnd(life.0, life.1),
+                size: rnd(size.0, size.1),
+                grow: 0.0,
+                rot: rnd(0.0, 360.0),
+                spin: rnd(-720.0, 720.0),
+                rgb: colours[k % colours.len()],
+                shape,
+            }
+        })
+        .collect()
+}
+
+impl Fx {
+    pub fn alive(&self) -> bool {
+        !self.particles.is_empty() || !self.stamps.is_empty() || self.flash.is_some()
+    }
+
+    /// Starts the effect for one crack at the whip tip `at` on a `screen` (w, h).
+    pub fn burst(&mut self, effect: Effect, at: V, screen: V) {
+        use Effect::*;
+        let p = &mut self.particles;
+        let st = &mut self.stamps;
+        let stamp = |kind, to: V, life: f32, rgb: u32| Stamp { kind, at, to, age: 0.0, life, rgb };
+        match effect {
+            Sparks => p.extend(ring(14, at, (260.0, 520.0), (0.18, 0.32), (2.0, 3.5), &[0xFFFFFF, 0x7FC4EC, 0x2F86C9], Shape::Spark, 0.0)),
+            Flash => {
+                self.flash = Some(ScreenFlash { colours: vec![0x33D6FF], alpha: 0.32, age: 0.0, life: 0.38 });
+                p.extend(ring(18, at, (300.0, 600.0), (0.2, 0.35), (1.5, 2.5), &[0x33D6FF, 0xFF5BD7, 0xFFFFFF], Shape::Spark, 0.0));
+            }
+            Thump => {
+                p.extend(ring(12, at, (60.0, 160.0), (0.4, 0.7), (8.0, 16.0), &[0x9A9286, 0x7E776D, 0xB8B0A2], Shape::Puff, -40.0));
+                st.push(stamp(StampKind::Shock, at, 0.25, 0x454950));
+            }
+            Lasso => {
+                st.push(stamp(StampKind::Lasso, at, 0.45, 0xB97A43));
+                p.extend(ring(8, at, (50.0, 130.0), (0.4, 0.6), (6.0, 11.0), &[0xD8C29A, 0xC9AE7E], Shape::Puff, -30.0));
+                p.extend(ring(6, at, (150.0, 300.0), (0.4, 0.6), (3.0, 5.0), &[0xE8C86A], Shape::Chip, 600.0));
+            }
+            Confetti => {
+                p.extend(ring(48, at, (200.0, 520.0), (0.6, 0.9), (3.0, 5.0), &[0xFF8CC6, 0xFFD25A, 0x7FD4FF, 0x8FE3A0, 0xFFFFFF], Shape::Chip, 700.0));
+                p.extend(ring(4, at, (40.0, 90.0), (0.4, 0.6), (5.0, 8.0), &[0xFFF2A8], Shape::Star, 0.0));
+            }
+            Exclaim => {
+                st.push(stamp(StampKind::Exclaim, at, 0.5, 0xE03A3A));
+                st.push(stamp(StampKind::Shock, at, 0.2, 0xE03A3A));
+            }
+            Ripple => {
+                st.push(stamp(StampKind::Ripple, at, 0.6, 0x3A3F55));
+                p.push(Particle { pos: (at.0 - 20.0, at.1 - 60.0), vel: (30.0, 40.0), grav: 20.0, drag: 0.99, age: 0.0, life: 0.85, size: 9.0, grow: 0.0, rot: 20.0, spin: 120.0, rgb: 0xFFB7C9, shape: Shape::Petal });
+            }
+            Slash => {
+                st.push(Stamp { kind: StampKind::Slash, at: (at.0 - 90.0, at.1 + 60.0), to: (at.0 + 90.0, at.1 - 60.0), age: 0.0, life: 0.22, rgb: 0xFFFFFF });
+                p.extend(ring(8, at, (30.0, 90.0), (0.4, 0.6), (8.0, 13.0), &[0x2B2D33, 0x3B3E46], Shape::Puff, -30.0));
+            }
+            Spray => {
+                p.extend(ring(14, at, (220.0, 420.0), (0.45, 0.7), (2.5, 4.0), &[0xCFEFFF, 0xFFFFFF, 0x7FC8F0], Shape::Drop, 900.0));
+                p.extend(ring(5, at, (30.0, 70.0), (0.4, 0.6), (8.0, 12.0), &[0x9AA0A8], Shape::Puff, -20.0));
+            }
+            Sizzle => {
+                p.extend(ring(14, at, (200.0, 420.0), (0.2, 0.4), (1.5, 2.5), &[0xFF9A3C, 0xFFFFFF, 0xFFD25A], Shape::Spark, 300.0));
+                p.extend(ring(6, at, (10.0, 40.0), (0.6, 0.85), (8.0, 12.0), &[0xF4F4F4], Shape::Puff, -120.0));
+            }
+            Magic => {
+                st.push(stamp(StampKind::Magic, at, 0.45, 0xB89CFF));
+                p.extend(ring(20, at, (120.0, 320.0), (0.4, 0.7), (3.0, 5.0), &[0xC7A8FF, 0xFFD25A, 0xFFFFFF], Shape::Star, 0.0));
+            }
+            Splash => {
+                p.extend(ring(16, at, (180.0, 420.0), (0.45, 0.75), (2.5, 4.5), &[0xD93A22, 0xB52A15, 0xFF6A4D], Shape::Drop, 900.0));
+                p.extend(ring(4, at, (20.0, 60.0), (0.5, 0.7), (3.0, 4.0), &[0x5FA84A, 0xFFF3E0], Shape::Chip, 500.0));
+                self.flash = Some(ScreenFlash { colours: vec![0xFFC27A], alpha: 0.12, age: 0.0, life: 0.45 });
+            }
+            Petals => p.extend(ring(12, at, (60.0, 180.0), (0.7, 0.9), (5.0, 8.0), &[0xFF9EC0, 0xFFC2D6, 0x8FCB7E], Shape::Petal, 120.0)),
+            Snow => {
+                p.extend(ring(24, at, (60.0, 220.0), (0.6, 0.9), (1.5, 3.0), &[0xFFFFFF, 0xE6F2FF], Shape::Dot, 160.0));
+                p.extend(ring(4, at, (20.0, 50.0), (0.4, 0.6), (9.0, 13.0), &[0xF4F8FF], Shape::Puff, -20.0));
+            }
+            Lightning => {
+                let to = if at.1 < screen.1 * 0.5 { (at.0 + rnd(-120.0, 120.0), screen.1) } else { (at.0 + rnd(-120.0, 120.0), 0.0) };
+                st.push(Stamp { kind: StampKind::Bolt, at, to, age: 0.0, life: 0.3, rgb: 0xFFE680 });
+                self.flash = Some(ScreenFlash { colours: vec![0xFFE08A], alpha: 0.22, age: 0.0, life: 0.18 });
+            }
+        }
+    }
+
+    pub fn step(&mut self, dt: f32) {
+        for q in &mut self.particles {
+            q.age += dt;
+            let k = q.drag.powf(dt * 60.0);
+            q.vel = (q.vel.0 * k, q.vel.1 * k + q.grav * dt);
+            q.pos = (q.pos.0 + q.vel.0 * dt, q.pos.1 + q.vel.1 * dt);
+            q.rot += q.spin * dt;
+            q.size += q.grow * dt;
+        }
+        self.particles.retain(|q| q.age < q.life);
+        for s in &mut self.stamps {
+            s.age += dt;
+        }
+        self.stamps.retain(|s| s.age < s.life);
+        if let Some(f) = &mut self.flash {
+            f.age += dt;
+            if f.age >= f.life {
+                self.flash = None;
+            }
+        }
+    }
+
+    /// The screen flash right now: colour and strength. Drawn by the renderer as an edge glow
+    /// (never a full-screen fill: cheap to draw, easy on the eyes).
+    pub fn flash_now(&self) -> Option<(u32, f32)> {
+        let f = self.flash.as_ref()?;
+        let t = f.age / f.life;
+        let idx = ((f.age / 0.06) as usize).min(f.colours.len() - 1);
+        Some((f.colours[idx], (f.alpha * 1.4).min(0.45) * (1.0 - t).powf(1.5)))
+    }
+
+    /// Box (left, top, right, bottom) around everything `draw` paints this frame.
+    pub fn bounds(&self) -> Option<(f32, f32, f32, f32)> {
+        let mut b: Option<(f32, f32, f32, f32)> = None;
+        let mut add = |x: f32, y: f32, pad: f32| {
+            let r = (x - pad, y - pad, x + pad, y + pad);
+            b = Some(b.map_or(r, |o| (o.0.min(r.0), o.1.min(r.1), o.2.max(r.2), o.3.max(r.3))));
+        };
+        for q in &self.particles {
+            add(q.pos.0, q.pos.1, q.size * 2.2 + 18.0);
+        }
+        for s in &self.stamps {
+            add(s.at.0, s.at.1, 120.0);
+            add(s.to.0, s.to.1, 40.0);
+        }
+        b
+    }
+
+    pub fn draw(&self, pm: &mut Pixmap) {
+        for s in &self.stamps {
+            draw_stamp(pm, s);
+        }
+        for q in &self.particles {
+            draw_particle(pm, q);
+        }
+    }
+}
+
+fn draw_particle(pm: &mut Pixmap, q: &Particle) {
+    let t = q.age / q.life;
+    let a = (1.0 - t).clamp(0.0, 1.0);
+    let tf = Transform::from_translate(q.pos.0, q.pos.1).pre_rotate(q.rot);
+    let s = q.size;
+    let path = match q.shape {
+        Shape::Dot | Shape::Puff => PathBuilder::from_circle(0.0, 0.0, if q.shape == Shape::Puff { s * (1.0 + t) } else { s }),
+        Shape::Chip => Rect::from_xywh(-s, -s * 0.5, s * 2.0, s).map(PathBuilder::from_rect),
+        Shape::Petal => {
+            let mut pb = PathBuilder::new();
+            pb.move_to(0.0, 0.0);
+            pb.cubic_to(s * 0.6, -s * 0.6, s * 1.6, -s * 0.5, s * 2.0, 0.0);
+            pb.cubic_to(s * 1.6, s * 0.5, s * 0.6, s * 0.6, 0.0, 0.0);
+            pb.finish()
+        }
+        Shape::Drop => {
+            let mut pb = PathBuilder::new();
+            pb.move_to(0.0, -s * 1.6);
+            pb.cubic_to(s * 0.9, -s * 0.4, s, s * 0.5, 0.0, s);
+            pb.cubic_to(-s, s * 0.5, -s * 0.9, -s * 0.4, 0.0, -s * 1.6);
+            pb.finish()
+        }
+        Shape::Star => {
+            let mut pb = PathBuilder::new();
+            for k in 0..8 {
+                let r = if k % 2 == 0 { s } else { s * 0.35 };
+                let ang = k as f32 * std::f32::consts::PI / 4.0;
+                if k == 0 { pb.move_to(ang.cos() * r, ang.sin() * r) } else { pb.line_to(ang.cos() * r, ang.sin() * r) }
+            }
+            pb.close();
+            pb.finish()
+        }
+        Shape::Spark => {
+            let v = q.vel;
+            let len = (v.0.hypot(v.1) * 0.03).clamp(3.0, 14.0);
+            let d = v.0.hypot(v.1).max(1e-3);
+            let mut pb = PathBuilder::new();
+            pb.move_to(q.pos.0, q.pos.1);
+            pb.line_to(q.pos.0 - v.0 / d * len, q.pos.1 - v.1 / d * len);
+            if let Some(path) = pb.finish() {
+                let st = Stroke { width: s, line_cap: LineCap::Round, ..Stroke::default() };
+                pm.stroke_path(&path, &paint(q.rgb, a), &st, Transform::identity(), None);
+            }
+            return;
+        }
+    };
+    let alpha = if q.shape == Shape::Puff { a * 0.55 } else { a };
+    if let Some(path) = path {
+        pm.fill_path(&path, &paint(q.rgb, alpha), FillRule::Winding, tf, None);
+    }
+}
+
+fn stroke_line(pm: &mut Pixmap, pts: &[V], rgb: u32, a: f32, w: f32) {
+    let mut pb = PathBuilder::new();
+    pb.move_to(pts[0].0, pts[0].1);
+    for p in &pts[1..] {
+        pb.line_to(p.0, p.1);
+    }
+    if let Some(path) = pb.finish() {
+        let st = Stroke { width: w, line_cap: LineCap::Round, line_join: tiny_skia::LineJoin::Round, ..Stroke::default() };
+        pm.stroke_path(&path, &paint(rgb, a), &st, Transform::identity(), None);
+    }
+}
+
+fn draw_stamp(pm: &mut Pixmap, s: &Stamp) {
+    let t = (s.age / s.life).clamp(0.0, 1.0);
+    let a = 1.0 - t;
+    let (x, y) = s.at;
+    match s.kind {
+        StampKind::Shock => {
+            for k in 0..3 {
+                let ang = -0.6 + k as f32 * 0.6;
+                let (r0, r1) = (18.0 + 30.0 * t, 34.0 + 40.0 * t);
+                stroke_line(pm, &[(x + ang.cos() * r0, y - 20.0 + ang.sin() * r0), (x + ang.cos() * r1, y - 20.0 + ang.sin() * r1)], s.rgb, a, 3.0);
+            }
+        }
+        StampKind::Exclaim => {
+            let pop = 1.0 + 0.25 * (1.0 - t).powi(3);
+            let tf = Transform::from_translate(x + 20.0, y - 70.0).pre_scale(pop, pop);
+            if let Some(r) = Rect::from_xywh(-7.0, -30.0, 14.0, 34.0) {
+                pm.fill_rect(r, &paint(s.rgb, a), tf, None);
+            }
+            if let Some(c) = PathBuilder::from_circle(0.0, 14.0, 7.5) {
+                pm.fill_path(&c, &paint(s.rgb, a), FillRule::Winding, tf, None);
+            }
+        }
+        StampKind::Ripple => {
+            for k in 0..3 {
+                let r = 10.0 + (t * 80.0) - k as f32 * 18.0;
+                if r > 2.0 {
+                    if let Some(c) = PathBuilder::from_circle(x, y, r) {
+                        let halo = Stroke { width: 3.5, ..Stroke::default() };
+                        pm.stroke_path(&c, &paint(0xFFFFFF, a * 0.45), &halo, Transform::identity(), None);
+                        let st = Stroke { width: 2.2, ..Stroke::default() };
+                        pm.stroke_path(&c, &paint(s.rgb, a * 0.8), &st, Transform::identity(), None);
+                    }
+                }
+            }
+        }
+        StampKind::Lasso => {
+            let turns = 1.5 * t.min(1.0) + 0.05;
+            let n = 48;
+            let pts: Vec<V> = (0..=n)
+                .map(|i| {
+                    let u = i as f32 / n as f32 * turns * std::f32::consts::TAU;
+                    let r = 46.0 * (1.0 - 0.6 * (u / (1.5 * std::f32::consts::TAU)));
+                    (x + u.cos() * r * 1.4, y - 30.0 + u.sin() * r * 0.55)
+                })
+                .collect();
+            stroke_line(pm, &pts, s.rgb, a, 3.0);
+        }
+        StampKind::Slash => {
+            let k = (t * 3.0).min(1.0);
+            let end = (s.at.0 + (s.to.0 - s.at.0) * k, s.at.1 + (s.to.1 - s.at.1) * k);
+            stroke_line(pm, &[s.at, end], 0x1E1F24, a * 0.45, 7.0);
+            stroke_line(pm, &[s.at, end], 0xBFE6FF, a * 0.5, 9.0);
+            stroke_line(pm, &[s.at, end], s.rgb, a, 3.0);
+        }
+        StampKind::Magic => {
+            let r = 40.0 + 20.0 * t;
+            if let Some(c) = PathBuilder::from_circle(x, y, r) {
+                let st = Stroke { width: 2.0, ..Stroke::default() };
+                pm.stroke_path(&c, &paint(s.rgb, a), &st, Transform::identity(), None);
+            }
+            let rot = t * 120.0_f32.to_radians();
+            let star: Vec<V> = (0..=6)
+                .map(|i| {
+                    let ang = rot + (i * 2 % 6) as f32 * std::f32::consts::TAU / 6.0 + if i * 2 >= 6 { std::f32::consts::PI / 6.0 * 0.0 } else { 0.0 };
+                    (x + ang.cos() * r * 0.85, y + ang.sin() * r * 0.85)
+                })
+                .collect();
+            stroke_line(pm, &star, 0xFFD25A, a, 1.6);
+        }
+        StampKind::Bolt => {
+            let segs = 9;
+            let mut pts = vec![s.at];
+            let mut rng = fastrand::Rng::with_seed(((s.at.0 as u64) << 16) ^ s.at.1 as u64);
+            for i in 1..segs {
+                let u = i as f32 / segs as f32;
+                let jitter = -28.0 + 56.0 * rng.f32();
+                pts.push((s.at.0 + (s.to.0 - s.at.0) * u + jitter, s.at.1 + (s.to.1 - s.at.1) * u));
+            }
+            pts.push(s.to);
+            let flick = if (s.age * 30.0) as i32 % 2 == 0 { 1.0 } else { 0.6 };
+            stroke_line(pm, &pts, 0x2E3A58, a * 0.55 * flick, 8.0);
+            stroke_line(pm, &pts, 0xFFC400, a * 0.55, 12.0);
+            stroke_line(pm, &pts, s.rgb, a * flick, 4.0);
+            stroke_line(pm, &pts, 0xFFFFFF, a * flick, 1.6);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::whips::CATALOGUE;
+
+    #[test]
+    fn every_whip_effect_starts_and_ends_in_time() {
+        for w in &CATALOGUE {
+            let mut fx = Fx::default();
+            fx.burst(w.effect, (500.0, 400.0), (1920.0, 1080.0));
+            assert!(fx.alive(), "{}", w.name);
+            let mut t = 0.0;
+            while fx.alive() && t < 2.0 {
+                fx.step(1.0 / 60.0);
+                t += 1.0 / 60.0;
+            }
+            assert!(!fx.alive() && t <= MAX_LIFE + 0.02, "{} lasted {t}", w.name);
+        }
+    }
+
+    #[test]
+    fn effects_stay_inside_their_bounds() {
+        for w in &CATALOGUE {
+            let mut fx = Fx::default();
+            fx.burst(w.effect, (600.0, 500.0), (1200.0, 1000.0));
+            for _ in 0..6 {
+                fx.step(1.0 / 60.0);
+                let Some((l, t, r, b)) = fx.bounds() else { continue };
+                let mut pm = Pixmap::new(1200, 1000).unwrap();
+                fx.draw(&mut pm);
+                for (i, px) in pm.pixels().iter().enumerate() {
+                    if px.alpha() > 0 {
+                        let (x, y) = ((i % 1200) as f32, (i / 1200) as f32);
+                        assert!(x >= l - 1.0 && x <= r + 1.0 && y >= t - 1.0 && y <= b + 1.0, "{}: ({x},{y}) outside {:?}", w.name, (l, t, r, b));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn effects_draw_something() {
+        for w in &CATALOGUE {
+            let mut fx = Fx::default();
+            fx.burst(w.effect, (300.0, 300.0), (600.0, 600.0));
+            fx.step(0.05);
+            let mut pm = Pixmap::new(600, 600).unwrap();
+            fx.draw(&mut pm);
+            assert!(pm.pixels().iter().any(|p| p.alpha() > 0) || fx.flash_now().is_some(), "{}", w.name);
+        }
+    }
+}
