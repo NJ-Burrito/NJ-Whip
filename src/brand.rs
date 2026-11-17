@@ -78,7 +78,12 @@ pub fn straight_rgba(pm: &Pixmap) -> Vec<u8> {
         .collect()
 }
 
+/// Every size Explorer, the taskbar, Alt-Tab and the tray ask for (16-256 across 100%-400% DPI).
+#[cfg(test)]
+const ICO_SIZES: [u32; 10] = [16, 20, 24, 32, 40, 48, 64, 96, 128, 256];
+
 /// A Windows .ico holding PNG images at the given sizes (`write_icon` makes assets/icon.ico with it).
+/// Each size is drawn from the vector path at that size, never scaled from another bitmap.
 #[cfg(test)]
 fn ico(sizes: &[u32], p: &Palette) -> Vec<u8> {
     let pngs: Vec<Vec<u8>> = sizes.iter().map(|&s| monogram(s, p, true).encode_png().expect("png")).collect();
@@ -113,15 +118,22 @@ mod tests {
 
     #[test]
     fn ico_header_lists_all_images() {
-        let b = ico(&[16, 32, 256], &POLAR_NIGHT);
+        let b = ico(&ICO_SIZES, &POLAR_NIGHT);
         assert_eq!(&b[0..4], &[0, 0, 1, 0]);
-        assert_eq!(u16::from_le_bytes([b[4], b[5]]), 3);
+        assert_eq!(u16::from_le_bytes([b[4], b[5]]), ICO_SIZES.len() as u16);
     }
 
     /// `cargo test write_icon -- --ignored` regenerates assets/icon.ico (Polar Night tile).
     #[test]
     #[ignore]
     fn write_icon() {
-        std::fs::write("assets/icon.ico", ico(&[16, 24, 32, 48, 64, 256], &POLAR_NIGHT)).unwrap();
+        std::fs::write("assets/icon.ico", ico(&ICO_SIZES, &POLAR_NIGHT)).unwrap();
+    }
+
+    /// `cargo test write_logo -- --ignored` regenerates the site/README logo (512 px, 2x for the 256 px slot).
+    #[test]
+    #[ignore]
+    fn write_logo() {
+        monogram(512, &POLAR_NIGHT, true).save_png("docs/assets/logo.png").unwrap();
     }
 }

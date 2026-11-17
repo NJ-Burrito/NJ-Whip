@@ -986,13 +986,13 @@ fn load_fonts(ctx: &egui::Context) {
 }
 
 pub fn run() {
-    let icon = brand::monogram(64, &POLAR_NIGHT, true);
+    let icon = brand::monogram(256, &POLAR_NIGHT, true);
     let opts = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title(TITLE)
             .with_inner_size([560.0, 760.0])
             .with_min_inner_size([480.0, 520.0])
-            .with_icon(egui::IconData { rgba: brand::straight_rgba(&icon), width: 64, height: 64 }),
+            .with_icon(egui::IconData { rgba: brand::straight_rgba(&icon), width: 256, height: 256 }),
         ..Default::default()
     };
     let engine = std::sync::Arc::new(std::sync::Mutex::new(None::<std::thread::JoinHandle<()>>));

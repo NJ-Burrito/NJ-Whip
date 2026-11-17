@@ -101,11 +101,15 @@ pub fn taskbar_is_light() -> bool {
     r.is_ok() && v == 1
 }
 
-/// The NJ monogram for the tray, coloured for the taskbar's theme.
+/// The NJ monogram for the tray, coloured for the taskbar's theme and drawn from the vector at
+/// exactly the pixel size the tray slot has (16 at 100%, 24 at 150%, 32 at 200% ...), so Windows
+/// never has to rescale a bitmap.
 fn tray_icon() -> Option<Icon> {
+    use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSMICON};
     let pal = if taskbar_is_light() { brand::GLACIER } else { brand::POLAR_NIGHT };
-    let pm = brand::monogram(32, &pal, false);
-    Icon::from_rgba(brand::straight_rgba(&pm), 32, 32).ok()
+    let size = (unsafe { GetSystemMetrics(SM_CXSMICON) }).clamp(16, 128) as u32;
+    let pm = brand::monogram(size, &pal, false);
+    Icon::from_rgba(brand::straight_rgba(&pm), size, size).ok()
 }
 
 struct Whip {
