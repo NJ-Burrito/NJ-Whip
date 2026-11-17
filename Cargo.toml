@@ -1,6 +1,6 @@
 [package]
 name = "nj-whip"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 description = "An on-screen whip for Claude Code on Windows: swing it, it cracks and types a short message that steers how Claude works."
 license = "MIT"
@@ -12,8 +12,9 @@ readme = "README.md"
 eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts"] }
 fastrand = "2"
 global-hotkey = "0.10.0"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp"] }
 rfd = { version = "0.15", default-features = false }
-rodio = { version = "0.23", default-features = false, features = ["playback", "mp3"] }
+rodio = { version = "0.23", default-features = false, features = ["playback", "mp3", "wav", "flac", "vorbis"] }
 skrifa = "0.44"
 serde = { version = "1", features = ["derive"] }
 tiny-skia = { version = "0.12", default-features = false, features = ["std", "simd", "png-format"] }

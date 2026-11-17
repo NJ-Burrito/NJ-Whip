@@ -9,6 +9,7 @@ use crate::brand::{self, Palette, GLACIER, POLAR_NIGHT};
 use crate::config::{self, Config, MacroStep, Theme};
 use crate::messages::{self, Pack, Profile};
 use crate::whips::{self, WhipId, ALL};
+use crate::sound::{self, Clip, Sound};
 use crate::{autostart, glyphs, keys, tipimg, update, whipdraw};
 use eframe::egui::text::ByteIndex;
 use eframe::egui::{self, Color32, CornerRadius, FontFamily, RichText, Sense, Stroke, StrokeKind, Vec2};
@@ -194,6 +195,8 @@ struct Window {
     hint: String,
     /// A line in reading order (shown through `para`).
     status: String,
+    /// Plays the crack and sound previews of the window's own buttons.
+    sound: Sound,
     new_line: String,
     errors: String,
     errors_stamp: [Option<SystemTime>; 2],
@@ -227,6 +230,7 @@ impl Window {
         ];
         let (cfg, cfg_stamp) = config::load();
         let cfg = cfg.unwrap_or_default();
+        let sound = Sound::new(cfg.volume, cfg.sfx_volume);
         Window {
             words: Rc::new(Words::new(cfg.lang)),
             ar_name: Words::new(Lang::Ar).get("Arabic").to_string(),
@@ -239,6 +243,7 @@ impl Window {
             rec: None,
             hint: String::new(),
             status: String::new(),
+            sound,
             new_line: String::new(),
             errors: read_errors(),
             errors_stamp: error_stamp(),
@@ -572,7 +577,7 @@ impl Window {
                 post(WM_TEST);
             }
             let has_tip = self.cfg.custom_tips.contains_key(&self.cfg.whip);
-            if ui.button(tx(ui, words.get(if has_tip { "Change tip picture…" } else { "Use my picture as the tip…" }))).clicked() {
+            if ui.button(tx(ui, words.get(if has_tip { "Change tip picture or GIF…" } else { "Use my picture or GIF as the tip…" }))).clicked() {
                 self.pick_tip();
             }
             if has_tip && ui.button(tx(ui, words.get("Remove picture"))).clicked() {
@@ -580,10 +585,107 @@ impl Window {
                 self.apply();
             }
         });
+        ui.add_space(6.0);
+        self.crack_sounds(ui);
+        ui.add_space(6.0);
+        self.own_sound(ui);
+    }
+
+    /// A preview of one clip by hand, at the volumes now set.
+    fn play_clip(&self, clip: Clip, extra: bool) {
+        self.sound.set_volume(self.cfg.volume, self.cfg.sfx_volume);
+        self.sound.play(clip, extra);
+    }
+
+    /// Every crack sound we have, to tick for the current whip (one of the ticked is played at
+    /// random per crack; none ticked = the whip's own).
+    fn crack_sounds(&mut self, ui: &mut egui::Ui) {
+        let w = self.words.clone();
+        let p = *self.pal();
+        let def = whips::def(self.cfg.whip);
+        let picked = self.cfg.custom_cracks.get(&def.id).map(Vec::as_slice);
+        let mut names: Vec<&'static str> = sound::chosen_cracks(def, picked).iter().map(|s| s.name).collect();
+        let custom = self.cfg.custom_cracks.contains_key(&def.id);
+        let (mut changed, mut reset) = (false, false);
+        egui::CollapsingHeader::new(tx(ui, w.get("Crack sounds"))).id_salt("crack-sounds").show(ui, |ui| {
+            ui.label(para_c(&w, ui, "Tick the cracks this whip plays. One of them is chosen at random per crack.", 12.0, c(p.muted)));
+            for s in sound::CRACK_SOUNDS {
+                ui.horizontal(|ui| {
+                    let mut on = names.contains(&s.name);
+                    // the last tick stays: no tick at all would mean the whip's own cracks
+                    let last = on && names.len() == 1;
+                    if ui.add_enabled(!last, egui::Checkbox::new(&mut on, s.label)).changed() {
+                        if on { names.push(s.name) } else { names.retain(|n| *n != s.name) }
+                        changed = true;
+                    }
+                    if ui.small_button(tx(ui, w.get("Play"))).clicked() {
+                        self.play_clip(Clip::Static(s.bytes), false);
+                    }
+                });
+            }
+            reset = ui.add_enabled(custom, egui::Button::new(tx(ui, w.get("Reset to default")))).clicked();
+        });
+        if reset {
+            self.cfg.custom_cracks.remove(&def.id);
+            self.apply();
+        } else if changed {
+            let mut own: Vec<_> = sound::default_cracks(def).iter().map(|s| s.name).collect();
+            let mut now = names.clone();
+            (own.sort(), now.sort());
+            if own == now {
+                self.cfg.custom_cracks.remove(&def.id);
+            } else {
+                self.cfg.custom_cracks.insert(def.id, names.iter().map(|n| n.to_string()).collect());
+            }
+            self.apply();
+        }
+    }
+
+    /// The user's own sound for the current whip (at most 3 s), played in place of the whip's
+    /// built-in extra sound.
+    fn own_sound(&mut self, ui: &mut egui::Ui) {
+        let w = self.words.clone();
+        let p = *self.pal();
+        let id = self.cfg.whip;
+        let path = self.cfg.custom_sfx.get(&id).cloned();
+        ui.label(txb(w.get("Special sound"), body_size(ui)));
+        ui.label(para_c(&w, ui, "Plays on top of the crack, in place of this whip's own sound. Up to 3 seconds: mp3, wav, ogg or flac.", 12.0, c(p.muted)));
+        ui.horizontal_wrapped(|ui| {
+            if ui.button(tx(ui, w.get(if path.is_some() { "Change my sound…" } else { "Use my sound…" }))).clicked() {
+                self.pick_sfx();
+            }
+            if let Some(path) = &path {
+                if ui.button(tx(ui, w.get("Play"))).clicked() {
+                    if let Some(clip) = sound::load_sfx(path) {
+                        self.play_clip(clip, true);
+                    }
+                }
+                if ui.button(tx(ui, w.get("Remove sound"))).clicked() {
+                    self.cfg.custom_sfx.remove(&id);
+                    sound::remove_sfx(&sound::sfx_dir(), &format!("{id:?}").to_lowercase());
+                    self.apply();
+                }
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    ui.label(txs(name, 12.0, c(p.muted)));
+                }
+            }
+        });
+    }
+
+    fn pick_sfx(&mut self) {
+        let Some(src) = rfd::FileDialog::new().add_filter("Sound", &sound::SFX_EXTENSIONS).pick_file() else { return };
+        let name = format!("{:?}", self.cfg.whip).to_lowercase();
+        match sound::import_sfx(&src, &sound::sfx_dir(), &name) {
+            Ok(dest) => {
+                self.cfg.custom_sfx.insert(self.cfg.whip, dest);
+                self.apply();
+            }
+            Err(e) => self.status = self.words.text(e.line(), &[]),
+        }
     }
 
     fn pick_tip(&mut self) {
-        let Some(src) = rfd::FileDialog::new().add_filter("PNG picture", &["png"]).pick_file() else { return };
+        let Some(src) = rfd::FileDialog::new().add_filter("Pictures and GIFs", &["png", "jpg", "jpeg", "gif", "webp", "bmp"]).pick_file() else { return };
         let name = format!("{:?}", self.cfg.whip).to_lowercase();
         match tipimg::import(&src, &name) {
             Ok(dest) => {

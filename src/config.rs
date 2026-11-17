@@ -43,6 +43,11 @@ pub struct Config {
     pub custom_lines: HashMap<WhipId, Vec<String>>,
     /// Per-whip custom tip image (a processed PNG under APPDATA/NJ-Whip/tips).
     pub custom_tips: HashMap<WhipId, PathBuf>,
+    /// Per-whip picked crack sounds, by name (missing or empty = the whip's own cracks).
+    pub custom_cracks: HashMap<WhipId, Vec<String>>,
+    /// Per-whip own sound (a copy under APPDATA/NJ-Whip/sfx, at most 3 s): plays as the whip's
+    /// extra in place of the built-in ones.
+    pub custom_sfx: HashMap<WhipId, PathBuf>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,6 +83,8 @@ impl Default for Config {
             lang: Default::default(),
             custom_lines: HashMap::new(),
             custom_tips: HashMap::new(),
+            custom_cracks: HashMap::new(),
+            custom_sfx: HashMap::new(),
         }
     }
 }
@@ -166,6 +173,8 @@ mod tests {
         };
         c.custom_lines.insert(WhipId::Neon, vec!["Zap".into()]);
         c.custom_tips.insert(WhipId::Penguin, PathBuf::from("C:/x/p.png"));
+        c.custom_cracks.insert(WhipId::Zen, vec!["storm".into(), "leather-2".into()]);
+        c.custom_sfx.insert(WhipId::Zen, PathBuf::from("C:/x/zen.wav"));
         save_to(&path, &c).unwrap();
         assert_eq!(load_from(&path), Ok(c));
         let _ = fs::remove_dir_all(&dir);
@@ -192,6 +201,7 @@ mod tests {
         let want = Config { volume: 0.4, whip: WhipId::Neon, pack: Pack::NjKit, theme: Theme::Dark, ..Config::default() };
         assert_eq!(c, want);
         assert_eq!((c.profile, c.always_esc, c.harder_ultrathink), (Profile::Light, false, false));
+        assert!(c.custom_cracks.is_empty() && c.custom_sfx.is_empty());
         let _ = fs::remove_dir_all(dir);
     }
 

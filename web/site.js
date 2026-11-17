@@ -39,11 +39,15 @@
   class Stage {
     constructor(canvas, w, h, seg, opts) {
       this.c = canvas; this.ctx = canvas.getContext('2d');
-      this.id = X.stage_new(w, h, seg); X.stage_opts(this.id, opts);
+      this.id = X.stage_new(w, h, seg);
+      if (this.id === -1) throw new Error('no room for a ' + w + 'x' + h + ' stage');
+      X.stage_opts(this.id, opts);
       this.fit(w, h); this.x = w / 2; this.y = h / 2; this.cracks = 0;
     }
     fit(w, h) { this.w = this.c.width = w; this.h = this.c.height = h; this.buf = null; }
     resize(w, h) { X.stage_resize(this.id, w, h); this.fit(w, h); this.x = w / 2; this.y = h / 2; }
+    /* A stage holds its pixels in the wasm until it is freed. */
+    free() { X.stage_free(this.id); this.id = -1; }
     /* Views into the wasm memory; they are made again whenever the memory has grown. */
     get out() {
       if (this.buf !== X.memory.buffer) {
@@ -200,6 +204,7 @@
         live(); st.crack(0);
       });
     });
+    brush.free(); /* it only painted the stills */
   }
 
   /* ---------- heat and streaks: the picked whip, cracked on a beat until the meter is full ---------- */

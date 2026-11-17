@@ -179,7 +179,6 @@ impl Stage {
         self.rope = Rope::spawn(&self.params, hand);
         self.shown.clone_from(&self.rope.pts);
         self.swing = Swing::default();
-        self.fx.trail_end();
         self.mouse_prev = hand;
         self.acc = 0.0;
         self.age = 0.0;
@@ -252,10 +251,6 @@ impl Stage {
         if self.shown.len() != pts.len() || pts.iter().zip(&self.shown).any(|(a, b)| (a.0 - b.0).hypot(a.1 - b.1) > SHOW_MOVE) {
             self.shown.clone_from(pts);
         }
-        match def.trail {
-            Some(rgb) => self.fx.trail(self.tip(), rgb),
-            None => self.fx.trail_end(),
-        }
         self.mouse_prev = mouse;
         let mut bits = 0;
         if let Some(dir) = cracked {
@@ -325,14 +320,30 @@ fn compose(pm: &tiny_skia::Pixmap, page: &mut [u8], r: R) {
     }
 }
 
+/// Pixels all live stages may hold together (8 bytes each: the canvas and the page). The site
+/// needs about 4 M; past this a new or bigger stage is refused, so a caller that never frees its
+/// stages gets `u32::MAX` back instead of growing the wasm memory to its 4 GiB limit and trapping.
+const MAX_LIVE_PX: u64 = 32 << 20;
+
+fn px(s: &Stage) -> u64 {
+    let (w, h) = s.canvas.size();
+    w as u64 * h as u64
+}
+
+/// Would `add` more pixels (after `freed` go) still fit in `MAX_LIVE_PX`?
+fn fits(stages: &[Option<Box<Stage>>], add: u64, freed: u64) -> bool {
+    stages.iter().flatten().map(|s| px(s)).sum::<u64>() - freed + add <= MAX_LIVE_PX
+}
+
 thread_local! {
-    // boxed: the page keeps pointers into a stage (`stage_out`) while more stages are made
-    static STAGES: RefCell<Vec<Box<Stage>>> = const { RefCell::new(Vec::new()) };
+    // boxed: the page keeps pointers into a stage (`stage_out`) while more stages are made.
+    // A freed stage leaves `None`; its slot (id) is given to the next new stage.
+    static STAGES: RefCell<Vec<Option<Box<Stage>>>> = const { RefCell::new(Vec::new()) };
     static TEXT: RefCell<String> = const { RefCell::new(String::new()) };
 }
 
 fn with<T: Default>(id: u32, f: impl FnOnce(&mut Stage) -> T) -> T {
-    STAGES.with_borrow_mut(|s| s.get_mut(id as usize).map(|s| f(s)).unwrap_or_default())
+    STAGES.with_borrow_mut(|s| s.get_mut(id as usize).and_then(Option::as_mut).map(|s| f(s)).unwrap_or_default())
 }
 
 fn quote(s: &str) -> String {
@@ -367,9 +378,9 @@ const INTENTS: [Intent; 5] = [Intent::Faster, Intent::Harder, Intent::Careful, I
 fn catalogue_json() -> String {
     let whips = list(CATALOGUE.iter().map(|w| {
         format!(
-            "{{\"name\":{},\"blurb\":{},\"hue\":\"#{:06X}\",\"shout\":{},\"intent\":{},\"effect\":\"{:?}\",\"screen\":\"{:?}\",\"weight\":{},\"trail\":{},\"cracks\":{},\"sounds\":{},\"lines\":{}}}",
+            "{{\"name\":{},\"blurb\":{},\"hue\":\"#{:06X}\",\"shout\":{},\"intent\":{},\"effect\":\"{:?}\",\"screen\":\"{:?}\",\"weight\":{},\"cracks\":{},\"sounds\":{},\"lines\":{}}}",
             quote(w.name), quote(w.blurb), w.vibe.hue, quote(w.vibe.shout), quote(w.intent.name()), w.effect, w.vibe.screen,
-            w.physics.weight, w.trail.is_some(), files(w.cracks), files(w.sounds), list(w.lines.iter().map(|l| quote(l))),
+            w.physics.weight, files(w.cracks), files(w.sounds), list(w.lines.iter().map(|l| quote(l))),
         )
     }));
     let packs = list(Pack::ALL.into_iter().map(|p| {
@@ -383,7 +394,7 @@ fn catalogue_json() -> String {
         format!("{{\"name\":{},\"note\":{},\"profile\":{},\"rows\":{}}}", quote(p.name()), quote(p.note()), p.uses_profile(), rows)
     }));
     let intents = list(INTENTS.into_iter().map(|i| quote(i.name())));
-    format!("{{\"whips\":{whips},\"intents\":{intents},\"packs\":{packs},\"cracksToFull\":{},\"trailLife\":{},\"markLife\":{}}}", rage::CRACKS_TO_FULL, effects::TRAIL_LIFE, effects::MARK_LIFE)
+    format!("{{\"whips\":{whips},\"intents\":{intents},\"packs\":{packs},\"cracksToFull\":{},\"markLife\":{}}}", rage::CRACKS_TO_FULL, effects::MARK_LIFE)
 }
 
 #[no_mangle]
@@ -409,27 +420,53 @@ pub extern "C" fn catalogue_len() -> u32 {
 }
 
 /// A new stage `w` x `h` px. `seg_scale` shortens the lash for a small stage (1 = the app's
-/// whip). Returns its id, or u32::MAX when it cannot be made.
+/// whip). Returns its id, or u32::MAX when it cannot be made (or would pass `MAX_LIVE_PX`).
+/// A stage lives until `stage_free`.
 #[no_mangle]
 pub extern "C" fn stage_new(w: u32, h: u32, seg_scale: f32) -> u32 {
-    STAGES.with_borrow_mut(|s| match Stage::new(w.clamp(16, 4096), h.clamp(16, 4096), seg_scale.clamp(0.2, 2.0)) {
-        Some(st) => {
-            s.push(Box::new(st));
-            s.len() as u32 - 1
+    let (w, h) = (w.clamp(16, 4096), h.clamp(16, 4096));
+    STAGES.with_borrow_mut(|s| {
+        if !fits(s, w as u64 * h as u64, 0) {
+            return u32::MAX;
         }
-        None => u32::MAX,
+        let Some(st) = Stage::new(w, h, seg_scale.clamp(0.2, 2.0)) else { return u32::MAX };
+        let id = s.iter().position(Option::is_none).unwrap_or(s.len());
+        if id == s.len() {
+            s.push(None);
+        }
+        s[id] = Some(Box::new(st));
+        id as u32
+    })
+}
+
+/// Drops a stage and its pixels; its id may be handed out again by `stage_new`.
+#[no_mangle]
+pub extern "C" fn stage_free(id: u32) {
+    STAGES.with_borrow_mut(|s| {
+        if let Some(slot) = s.get_mut(id as usize) {
+            *slot = None;
+        }
     })
 }
 
 /// A new size for a stage (the page was resized): the whip, the options and the pointer stay,
-/// effects in the air are dropped.
+/// effects in the air are dropped. A size past `MAX_LIVE_PX` is refused (the old size stays).
 #[no_mangle]
 pub extern "C" fn stage_resize(id: u32, w: u32, h: u32) {
-    with(id, |s| {
-        if let Some(mut st) = Stage::new(w.clamp(16, 4096), h.clamp(16, 4096), s.seg_scale) {
+    let (w, h) = (w.clamp(16, 4096), h.clamp(16, 4096));
+    STAGES.with_borrow_mut(|stages| {
+        let old = match stages.get(id as usize) {
+            Some(Some(s)) => px(s),
+            _ => return,
+        };
+        if !fits(stages, w as u64 * h as u64, old) {
+            return;
+        }
+        let Some(s) = stages[id as usize].as_mut() else { return };
+        if let Some(mut st) = Stage::new(w, h, s.seg_scale) {
             st.opts = s.opts;
             st.take(s.whip, (w as f32 / 2.0, h as f32 / 2.0));
-            *s = st;
+            **s = st;
         }
     })
 }
@@ -469,11 +506,11 @@ pub extern "C" fn stage_frame(id: u32, dt: f32, x: f32, y: f32) -> u32 {
 /// The stage's pixels: width x height x 4 bytes, opaque RGBA.
 #[no_mangle]
 pub extern "C" fn stage_pixels(id: u32) -> *const u8 {
-    STAGES.with_borrow(|s| s.get(id as usize).map_or(std::ptr::null(), |s| s.page.as_ptr()))
+    STAGES.with_borrow(|s| s.get(id as usize).and_then(Option::as_ref).map_or(std::ptr::null(), |s| s.page.as_ptr()))
 }
 
 /// The numbers of the last frame (`OUT_LEN` f32s, see the `OUT_*` constants).
 #[no_mangle]
 pub extern "C" fn stage_out(id: u32) -> *const f32 {
-    STAGES.with_borrow(|s| s.get(id as usize).map_or(std::ptr::null(), |s| s.out.as_ptr()))
+    STAGES.with_borrow(|s| s.get(id as usize).and_then(Option::as_ref).map_or(std::ptr::null(), |s| s.out.as_ptr()))
 }

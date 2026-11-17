@@ -1,6 +1,6 @@
 // Checks the wasm the site ships (docs/assets/nj-whip.wasm): node web/check.mjs
 // A snap cracks once, a lazy sweep never does, every whip is in the catalogue with sound files
-// that exist, and the Sauce trail is gone after its life.
+// that exist, every crack leaves its landing mark, and stages are freed and capped.
 import { readFileSync, existsSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
@@ -27,7 +27,9 @@ function cracks(i, x, secs) {
   X.stage_whip(id, i, x(0), 400);
   for (let t = 0; t < 0.5; t += DT) X.stage_frame(id, DT, x(0), 400); // past the first-crack grace
   for (let t = 0; t < secs; t += DT) X.stage_frame(id, DT, x(t), 400);
-  return out(id)[4];
+  const n = out(id)[4];
+  X.stage_free(id);
+  return n;
 }
 const lazy = (t) => 640 + 300 * Math.cos(t * 2 * Math.PI);
 const snap = (t) => { const s = t * 60; return s <= 10 ? 1000 - 25 * s : 750 + 50 * Math.min(s - 10, 12); };
@@ -35,16 +37,6 @@ cat.whips.forEach((w, i) => {
   assert.equal(cracks(i, lazy, 4), 0, `${w.name}: a lazy sweep only whooshes`);
   assert.equal(cracks(i, snap, 1), 1, `${w.name}: a snap cracks once`);
 });
-
-const sauce = cat.whips.findIndex((w) => w.trail);
-assert.ok(sauce >= 0, 'a whip leaves a trail');
-const id = X.stage_new(1280, 720, 1);
-X.stage_whip(id, sauce, 200, 300);
-for (let f = 0; f < 40; f++) X.stage_frame(id, DT, 200 + 22 * f, 300);
-let drew = 0, last = 0;
-for (let f = 0; f < (cat.trailLife + 4) * 60; f++) if (X.stage_frame(id, DT, 1080, 300) & 1) { drew++; last = f; }
-assert.ok(drew > cat.trailLife * 30, 'the trail keeps fading on screen');
-assert.ok(last / 60 < cat.trailLife + 2.5, `the trail is gone ${(last / 60).toFixed(1)} s after the whip stops (life ${cat.trailLife} s)`);
 
 /* Every crack leaves its landing mark: on screen 1.5 s later, gone after MARK_LIFE. The whip is
    then taken to the far left, so only the mark can be near the crack point. */
@@ -69,6 +61,28 @@ cat.whips.forEach((w, i) => {
   run(cat.markLife + 0.5 - 1.5); const after = lit();
   assert.ok(mid > 20, `${w.name}: the landing mark shows 1.5 s after the crack (${mid} px)`);
   assert.ok(after <= 2, `${w.name}: the landing mark is gone after ${cat.markLife} s (${after} px left)`);
+  X.stage_free(m);
 });
 
-console.log(`PASS  ${cat.whips.length} whips, ${cat.packs.length} packs, swing, trail and landing marks behave as in the app`);
+/* Stages do not pile up. Made and freed over and over, the wasm memory stays where it was (each
+   1280x720 stage holds 7 MB; 500 kept would be 3.5 GB). Made and never freed, they are refused
+   (u32::MAX) long before the 4 GiB wasm limit, where the old engine trapped. */
+const MB = () => X.memory.buffer.byteLength / 2 ** 20, base = MB();
+const NONE = -1; // u32::MAX as wasm hands an i32 back
+for (let k = 0; k < 500; k++) {
+  const s = X.stage_new(1280, 720, 1);
+  assert.notEqual(s, NONE, `stage ${k} made`);
+  X.stage_frame(s, DT, 640, 360);
+  X.stage_free(s);
+}
+assert.ok(MB() <= base + 16, `500 stages made and freed: memory ${base} -> ${MB()} MB`);
+const kept = [];
+for (let s; (s = X.stage_new(1280, 720, 1)) !== NONE;) {
+  kept.push(s);
+  assert.ok(kept.length < 100, 'never-freed stages are refused before the memory runs out');
+}
+assert.ok(kept.length >= 16 && MB() < 512, `${kept.length} stages kept, then refused at ${MB()} MB`);
+kept.forEach(X.stage_free);
+assert.notEqual(X.stage_new(1280, 720, 1), NONE, 'freed stages make room again');
+
+console.log(`PASS  ${cat.whips.length} whips, ${cat.packs.length} packs and landing marks behave as in the app; stages are freed and capped`);

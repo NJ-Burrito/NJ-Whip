@@ -29,14 +29,14 @@
 - 🎯 **What:** a whip on your mouse. A crack types one short instruction to Claude Code.
 - 🧭 **Why:** to steer Claude without stopping to write: faster, harder, careful, happier or focus.
 - 🎉 **Fun too:** 15 whips, each with its own sound, effect and landing mark.
-- 💸 **Cost:** free, MIT, one exe of about 6.7 MB. No installer, no account.
+- 💸 **Cost:** free, MIT, one exe of about 8 MB. No installer, no account.
 - 🔄 **Updates:** About tab, **Check for updates**. It asks GitHub only when you press it.
 
 <a id="get"></a>
 
 ## ⬇️ Get it
 
-1. Download **[`NJ-Whip.exe`](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe)** (version 0.4.0, about 6.7 MB).
+1. Download **[`NJ-Whip.exe`](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe)** (version 0.5.0, about 8 MB).
 2. Run it. The window opens and the monogram appears in the tray.
 3. Flip the switch to **On**.
 

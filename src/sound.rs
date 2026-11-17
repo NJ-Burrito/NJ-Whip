@@ -1,12 +1,17 @@
-//! Sounds embedded in the exe: each whip's own crack (one of its clips at random per crack; the
-//! Classic whip has the five leather cracks) plus, for some whips, a voice or effect clip played
-//! on top of the crack.
+//! Sounds: each whip's own crack (one of its clips at random per crack; the Classic whip has the
+//! five leather cracks), a voice or effect clip some whips play on top of the crack, and what the
+//! user chose instead: any of the crack sounds we have, and one sound file of their own (at most 3 s).
 
 use rodio::buffer::SamplesBuffer;
 use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player, Source};
 use std::io::Cursor;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use crate::config::Config;
+use crate::whips::{self, WhipDef};
 
 macro_rules! clip {
     ($name:ident, $file:literal) => {
@@ -62,17 +67,191 @@ fn extras_due(rest_until: Option<Instant>, now: Instant) -> bool {
     rest_until.is_none_or(|t| now >= t)
 }
 
-/// How long a clip plays.
-fn clip_length(bytes: &'static [u8]) -> Duration {
-    let Ok(src) = Decoder::try_from(Cursor::new(bytes)) else { return Duration::ZERO };
-    let per_second = src.sample_rate().get() as f32 * src.channels().get() as f32;
-    Duration::from_secs_f32(src.count() as f32 / per_second)
+/// Sound bytes: built into the exe, or read from the user's own file. Cloning shares the bytes.
+#[derive(Clone)]
+pub enum Clip {
+    Static(&'static [u8]),
+    Owned(Arc<[u8]>),
+}
+
+impl AsRef<[u8]> for Clip {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            Clip::Static(b) => b,
+            Clip::Owned(b) => b,
+        }
+    }
+}
+
+/// The longest a custom sound may be.
+pub const SFX_MAX: Duration = Duration::from_secs(3);
+/// A custom sound file bigger than this is refused before it is read.
+const SFX_MAX_BYTES: u64 = 16 << 20;
+/// File types a custom sound may have (what the decoder is built with).
+pub const SFX_EXTENSIONS: [&str; 4] = ["mp3", "wav", "ogg", "flac"];
+
+/// How long a clip plays; at most `cap` (plus one sample) is decoded. None when it does not
+/// decode or holds no sound.
+fn measure(clip: Clip, cap: Duration) -> Option<Duration> {
+    let src = Decoder::try_from(Cursor::new(clip)).ok()?;
+    let per_second = src.sample_rate().get() as f64 * src.channels().get() as f64;
+    let room = (per_second * cap.as_secs_f64()) as usize + 1;
+    let n = src.take(room).count();
+    (n > 0).then(|| Duration::from_secs_f64(n as f64 / per_second))
+}
+
+/// One crack sound we have, by a stable name (what config.toml stores).
+pub struct CrackSound {
+    /// The constant in clips.rs, for the test that every crack clip is listed.
+    ident: &'static str,
+    pub name: &'static str,
+    pub label: &'static str,
+    pub bytes: &'static [u8],
+}
+
+macro_rules! crack_list {
+    ($(($id:ident, $name:literal, $label:literal)),* $(,)?) => {
+        /// Every crack sound the exe holds: the five leather cracks and each whip's own.
+        pub const CRACK_SOUNDS: &[CrackSound] =
+            &[$(CrackSound { ident: stringify!($id), name: $name, label: $label, bytes: $id }),*];
+    };
+}
+crack_list![
+    (CRACK_1, "leather-1", "Leather 1"),
+    (CRACK_2, "leather-2", "Leather 2"),
+    (CRACK_3, "leather-3", "Leather 3"),
+    (CRACK_4, "leather-4", "Leather 4"),
+    (CRACK_5, "leather-5", "Leather 5"),
+    (NEON_CRACK, "neon", "Neon"),
+    (ELEPHANT_CRACK, "elephant", "Elephant"),
+    (COWBOY_CRACK, "cowboy", "Cowboy"),
+    (CHEER_CRACK, "cheer", "Cheer"),
+    (SAUCE_CRACK, "sauce", "Sauce"),
+    (DRILL_CRACK, "drill", "Drill"),
+    (ZEN_CRACK, "zen", "Zen"),
+    (NINJA_CRACK, "ninja", "Ninja"),
+    (PIRATE_CRACK, "pirate", "Pirate"),
+    (CHEF_CRACK, "chef", "Chef"),
+    (WIZARD_CRACK, "wizard", "Wizard"),
+    (VINE_CRACK, "vine", "Vine"),
+    (PENGUIN_CRACK, "penguin", "Penguin"),
+    (STORM_CRACK, "storm", "Storm"),
+];
+
+/// The whip's own cracks, as listed sounds.
+pub fn default_cracks(def: &WhipDef) -> Vec<&'static CrackSound> {
+    def.cracks.iter().filter_map(|b| CRACK_SOUNDS.iter().find(|s| s.bytes == *b)).collect()
+}
+
+/// The cracks that play for a whip: the user's picked names (unknown names are dropped), or the
+/// whip's own when none is picked or none is known.
+pub fn chosen_cracks(def: &WhipDef, picked: Option<&[String]>) -> Vec<&'static CrackSound> {
+    let set: Vec<_> = picked
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|n| CRACK_SOUNDS.iter().find(|s| s.name == n))
+        .collect();
+    if set.is_empty() { default_cracks(def) } else { set }
+}
+
+/// What the audio thread plays for the current whip. Replaced whole when the settings change.
+#[derive(Clone, Default)]
+pub struct Loadout {
+    cracks: Vec<Clip>,
+    extras: Vec<Clip>,
+    /// The longest extra, measured once here.
+    extras_len: Duration,
+}
+
+pub fn sfx_dir() -> PathBuf {
+    crate::config::config_path().with_file_name("sfx")
+}
+
+/// The user's sound file for a whip, read whole (None when missing or too big).
+pub fn load_sfx(path: &Path) -> Option<Clip> {
+    if std::fs::metadata(path).ok()?.len() > SFX_MAX_BYTES {
+        return None;
+    }
+    Some(Clip::Owned(std::fs::read(path).ok()?.into()))
+}
+
+/// Builds the loadout of the current whip from the settings: the chosen cracks, and the user's
+/// own sound as the whip's extra in place of the built-in ones.
+pub fn loadout(cfg: &Config) -> Loadout {
+    let def = whips::def(cfg.whip);
+    let cracks = chosen_cracks(def, cfg.custom_cracks.get(&cfg.whip).map(Vec::as_slice))
+        .into_iter()
+        .map(|s| Clip::Static(s.bytes))
+        .collect();
+    let extras: Vec<Clip> = match cfg.custom_sfx.get(&cfg.whip).and_then(|p| load_sfx(p)) {
+        Some(own) => vec![own],
+        None => def.sounds.iter().map(|b| Clip::Static(b)).collect(),
+    };
+    let extras_len = extras.iter().filter_map(|c| measure(c.clone(), Duration::from_secs(60))).max().unwrap_or_default();
+    Loadout { cracks, extras, extras_len }
+}
+
+/// Why a picked sound file was refused. `line()` is the English message (the window translates it).
+#[derive(Debug, PartialEq)]
+pub enum SfxError {
+    Type,
+    TooBig,
+    Unreadable,
+    NotAudio,
+    TooLong,
+}
+
+impl SfxError {
+    pub fn line(&self) -> &'static str {
+        match self {
+            SfxError::Type => "That file type is not supported. Use mp3, wav, ogg or flac.",
+            SfxError::TooBig => "That file is too big for a short sound.",
+            SfxError::Unreadable => "That file could not be read.",
+            SfxError::NotAudio => "That file is not a sound that can be played.",
+            SfxError::TooLong => "That sound is longer than 3 seconds. Pick a shorter one.",
+        }
+    }
+}
+
+/// Checks a picked file (type, size, decodes, at most `SFX_MAX`) and copies it to
+/// `dir/<name>.<ext>`, replacing any earlier copy for that name. Returns the copy's path.
+pub fn import_sfx(src: &Path, dir: &Path, name: &str) -> Result<PathBuf, SfxError> {
+    let ext = src
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(str::to_lowercase)
+        .filter(|e| SFX_EXTENSIONS.contains(&e.as_str()))
+        .ok_or(SfxError::Type)?;
+    let clip = load_sfx(src).ok_or_else(|| match std::fs::metadata(src) {
+        Ok(m) if m.len() > SFX_MAX_BYTES => SfxError::TooBig,
+        _ => SfxError::Unreadable,
+    })?;
+    let len = measure(clip.clone(), SFX_MAX).ok_or(SfxError::NotAudio)?;
+    if len > SFX_MAX {
+        return Err(SfxError::TooLong);
+    }
+    std::fs::create_dir_all(dir).map_err(|_| SfxError::Unreadable)?;
+    remove_sfx(dir, name);
+    let dest = dir.join(format!("{name}.{ext}"));
+    std::fs::write(&dest, clip.as_ref()).map_err(|_| SfxError::Unreadable)?;
+    Ok(dest)
+}
+
+/// Removes the app's copies of a whip's sound (every type), so none piles up.
+pub fn remove_sfx(dir: &Path, name: &str) {
+    for ext in SFX_EXTENSIONS {
+        let _ = std::fs::remove_file(dir.join(format!("{name}.{ext}")));
+    }
 }
 
 enum Cmd {
-    /// The crack choices (one is played at random), the extras (all played, unless they are
-    /// resting) and whether the extras play even while resting (a whip was picked or tested).
-    Crack(&'static [&'static [u8]], &'static [&'static [u8]], bool),
+    /// One random crack of the loadout, plus its extras unless they are resting; `always` plays
+    /// the extras even while resting (a whip was picked or tested).
+    Crack(bool),
+    /// Replace the loadout (the old one is dropped).
+    Loadout(Loadout),
+    /// One clip, by hand (a preview in the window); `extra` = at the extras' volume.
+    Play(Clip, bool),
     Whoosh(f32, f32),
     Volume(f32, f32),
 }
@@ -87,9 +266,9 @@ impl Sound {
     pub fn new(volume: f32, sfx_volume: f32) -> Self {
         let (tx, rx) = mpsc::channel();
         // If the thread cannot start, `rx` is dropped and every send fails silently: no sound.
-        let _ = std::thread::Builder::new()
-            .name("nj-whip-audio".into())
-            .spawn(move || Audio { sink: None, last_used: None, volume, sfx_volume, extras_rest: None }.run(rx));
+        let _ = std::thread::Builder::new().name("nj-whip-audio".into()).spawn(move || {
+            Audio { sink: None, last_used: None, volume, sfx_volume, extras_rest: None, loadout: Loadout::default() }.run(rx)
+        });
         Sound { tx }
     }
 
@@ -97,15 +276,24 @@ impl Sound {
         let _ = self.tx.send(Cmd::Volume(volume, sfx_volume));
     }
 
-    /// One random clip of `cracks`, plus the whip's own clips (`extras`, if any) on top unless
-    /// they are resting (see `EXTRAS_REST`).
-    pub fn crack(&self, cracks: &'static [&'static [u8]], extras: &'static [&'static [u8]]) {
-        let _ = self.tx.send(Cmd::Crack(cracks, extras, false));
+    pub fn set_loadout(&self, loadout: Loadout) {
+        let _ = self.tx.send(Cmd::Loadout(loadout));
+    }
+
+    /// One random crack of the loadout, plus the whip's extras on top unless they are resting
+    /// (see `EXTRAS_REST`).
+    pub fn crack(&self) {
+        let _ = self.tx.send(Cmd::Crack(false));
     }
 
     /// A whip's whole sound, asked for by hand (picked or tested in the window): always in full.
-    pub fn preview(&self, cracks: &'static [&'static [u8]], extras: &'static [&'static [u8]]) {
-        let _ = self.tx.send(Cmd::Crack(cracks, extras, true));
+    pub fn preview(&self) {
+        let _ = self.tx.send(Cmd::Crack(true));
+    }
+
+    /// One clip on its own (`extra`: at the whips' own sounds' volume).
+    pub fn play(&self, clip: Clip, extra: bool) {
+        let _ = self.tx.send(Cmd::Play(clip, extra));
     }
 
     /// The whip cutting the air before a crack. `power` 0..1 = how hard the swing is;
@@ -124,6 +312,7 @@ struct Audio {
     sfx_volume: f32,
     /// The whips' own clips play again from this moment on.
     extras_rest: Option<Instant>,
+    loadout: Loadout,
 }
 
 impl Audio {
@@ -145,17 +334,22 @@ impl Audio {
     fn handle(&mut self, cmd: Cmd) {
         match cmd {
             Cmd::Volume(v, sfx) => (self.volume, self.sfx_volume) = (v, sfx),
-            Cmd::Crack(cracks, extras, always) => {
-                if !cracks.is_empty() {
-                    self.play_bytes(cracks[fastrand::usize(..cracks.len())], self.volume);
+            Cmd::Loadout(l) => {
+                self.loadout = l;
+                self.extras_rest = None;
+            }
+            Cmd::Play(clip, extra) => self.play_bytes(clip, if extra { self.sfx_volume } else { self.volume }),
+            Cmd::Crack(always) => {
+                if !self.loadout.cracks.is_empty() {
+                    let clip = self.loadout.cracks[fastrand::usize(..self.loadout.cracks.len())].clone();
+                    self.play_bytes(clip, self.volume);
                 }
                 let now = Instant::now();
-                if !extras.is_empty() && (always || extras_due(self.extras_rest, now)) {
-                    for bytes in extras {
-                        self.play_bytes(bytes, self.sfx_volume);
+                if !self.loadout.extras.is_empty() && (always || extras_due(self.extras_rest, now)) {
+                    for clip in self.loadout.extras.clone() {
+                        self.play_bytes(clip, self.sfx_volume);
                     }
-                    let longest = extras.iter().map(|b| clip_length(b)).max().unwrap_or_default();
-                    self.extras_rest = Some(now + longest + EXTRAS_REST);
+                    self.extras_rest = Some(now + self.loadout.extras_len + EXTRAS_REST);
                 }
             }
             Cmd::Whoosh(power, weight) => {
@@ -171,11 +365,11 @@ impl Audio {
         }
     }
 
-    fn play_bytes(&mut self, bytes: &'static [u8], volume: f32) {
+    fn play_bytes(&mut self, clip: Clip, volume: f32) {
         if !audible(volume) {
             return;
         }
-        let Ok(src) = Decoder::try_from(Cursor::new(bytes)) else { return };
+        let Ok(src) = Decoder::try_from(Cursor::new(clip)) else { return };
         if let Some(player) = self.player(volume) {
             player.append(src);
             player.detach();
@@ -201,6 +395,7 @@ impl Audio {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::whips::{WhipId, ALL};
 
     #[test]
     fn whoosh_is_short_quiet_at_both_ends_and_longer_when_heavy() {
@@ -229,5 +424,134 @@ mod tests {
         assert!(!expired(None, t0));
         assert!(!expired(Some(t0), t0 + Duration::from_millis(2900)));
         assert!(expired(Some(t0), t0 + KEEP_OPEN));
+    }
+
+    /// A mono 16-bit PCM wav of silence-with-a-tone, `secs` long.
+    fn wav(secs: f32) -> Vec<u8> {
+        let rate = 8000u32;
+        let n = (rate as f32 * secs) as u32;
+        let mut b = Vec::new();
+        b.extend(b"RIFF");
+        b.extend((36 + n * 2).to_le_bytes());
+        b.extend(b"WAVEfmt ");
+        b.extend(16u32.to_le_bytes());
+        b.extend([1, 0, 1, 0]);
+        b.extend(rate.to_le_bytes());
+        b.extend((rate * 2).to_le_bytes());
+        b.extend([2, 0, 16, 0]);
+        b.extend(b"data");
+        b.extend((n * 2).to_le_bytes());
+        for i in 0..n {
+            b.extend((((i % 40) as i16 - 20) * 300).to_le_bytes());
+        }
+        b
+    }
+
+    fn tmp(name: &str) -> PathBuf {
+        std::env::temp_dir().join(format!("njw-sfx-{}-{name}", std::process::id()))
+    }
+
+    #[test]
+    fn custom_sound_over_three_seconds_is_refused_and_a_short_one_kept() {
+        let dir = tmp("import");
+        std::fs::create_dir_all(&dir).unwrap();
+        let (short, long, edge) = (dir.join("short.wav"), dir.join("long.wav"), dir.join("edge.wav"));
+        std::fs::write(&short, wav(1.0)).unwrap();
+        std::fs::write(&long, wav(3.5)).unwrap();
+        std::fs::write(&edge, wav(3.0)).unwrap();
+        let out = dir.join("sfx");
+
+        assert_eq!(import_sfx(&long, &out, "zen"), Err(SfxError::TooLong));
+        assert!(!out.join("zen.wav").exists(), "a refused file is not copied");
+        let kept = import_sfx(&short, &out, "zen").unwrap();
+        assert_eq!(kept, out.join("zen.wav"));
+        assert_eq!(std::fs::read(&kept).unwrap(), wav(1.0));
+        assert!(import_sfx(&edge, &out, "zen").is_ok(), "exactly 3 s is allowed");
+
+        // not a sound, wrong type
+        let junk = dir.join("junk.mp3");
+        std::fs::write(&junk, b"this is not audio at all").unwrap();
+        assert_eq!(import_sfx(&junk, &out, "zen"), Err(SfxError::NotAudio));
+        let txt = dir.join("a.txt");
+        std::fs::write(&txt, b"x").unwrap();
+        assert_eq!(import_sfx(&txt, &out, "zen"), Err(SfxError::Type));
+        assert_eq!(import_sfx(&dir.join("none.wav"), &out, "zen"), Err(SfxError::Unreadable));
+
+        remove_sfx(&out, "zen");
+        assert!(!out.join("zen.wav").exists());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_new_copy_replaces_the_old_one_of_another_type() {
+        let dir = tmp("replace");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("neon.ogg"), b"old").unwrap();
+        let src = dir.join("in.wav");
+        std::fs::write(&src, wav(0.5)).unwrap();
+        import_sfx(&src, &dir, "neon").unwrap();
+        assert!(!dir.join("neon.ogg").exists() && dir.join("neon.wav").exists());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Every crack clip in clips.rs (`CRACK_n`, `*_CRACK`) is in the list, once, with a unique name.
+    #[test]
+    fn crack_list_covers_every_crack_clip() {
+        let mut found: Vec<&str> = include_str!("clips.rs")
+            .lines()
+            .filter_map(|l| l.strip_prefix("clip!(")?.split(',').next())
+            .filter(|id| id.ends_with("_CRACK") || id.starts_with("CRACK_"))
+            .collect();
+        let mut listed: Vec<&str> = CRACK_SOUNDS.iter().map(|s| s.ident).collect();
+        found.sort();
+        listed.sort();
+        assert_eq!(found, listed);
+        let mut names: Vec<_> = CRACK_SOUNDS.iter().map(|s| s.name).collect();
+        names.sort();
+        names.dedup();
+        assert_eq!(names.len(), CRACK_SOUNDS.len(), "names are unique");
+        assert!(CRACK_SOUNDS.iter().all(|s| !s.bytes.is_empty() && !s.label.is_empty()));
+    }
+
+    #[test]
+    fn chosen_cracks_resolve_picked_names_or_the_whips_own() {
+        let zen = whips::def(WhipId::Zen);
+        let names = |v: Vec<&CrackSound>| v.iter().map(|s| s.name).collect::<Vec<_>>();
+        assert_eq!(names(chosen_cracks(zen, None)), ["zen"]);
+        assert_eq!(names(chosen_cracks(zen, Some(&[]))), ["zen"], "empty = default");
+        let own = ["storm".to_string(), "leather-2".to_string(), "nope".to_string()];
+        assert_eq!(names(chosen_cracks(zen, Some(&own))), ["storm", "leather-2"], "unknown names dropped");
+        assert_eq!(names(chosen_cracks(zen, Some(&["nope".to_string()]))), ["zen"], "none known = default");
+        assert_eq!(names(chosen_cracks(whips::def(WhipId::Classic), None)).len(), 5);
+        // every whip's own cracks are all in the list
+        for &id in ALL.iter() {
+            let def = whips::def(id);
+            assert_eq!(default_cracks(def).len(), def.cracks.len(), "{}", def.name);
+        }
+    }
+
+    #[test]
+    fn loadout_follows_the_settings_and_the_users_sound_replaces_the_built_in_extra() {
+        let dir = tmp("loadout");
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("mine.wav");
+        std::fs::write(&file, wav(1.0)).unwrap();
+
+        let mut cfg = Config { whip: WhipId::Zen, ..Config::default() };
+        let base = loadout(&cfg);
+        assert_eq!((base.cracks.len(), base.extras.len()), (1, 1), "Zen: its crack and its gong");
+        assert!(base.extras_len > Duration::ZERO);
+
+        cfg.custom_cracks.insert(WhipId::Zen, vec!["storm".into(), "neon".into(), "leather-1".into()]);
+        cfg.custom_sfx.insert(WhipId::Zen, file.clone());
+        let own = loadout(&cfg);
+        assert_eq!(own.cracks.len(), 3);
+        assert!(matches!(own.extras[..], [Clip::Owned(_)]), "the user's sound, not the gong");
+        assert!((own.extras_len.as_secs_f32() - 1.0).abs() < 0.05);
+
+        // a missing file falls back to the built-in extras
+        cfg.custom_sfx.insert(WhipId::Zen, dir.join("gone.wav"));
+        assert!(matches!(loadout(&cfg).extras[..], [Clip::Static(_)]));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

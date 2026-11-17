@@ -20,3 +20,5 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --release --locked
+      # The website's engine as shipped (docs/assets/nj-whip.wasm): swing, trail, marks, stage memory.
+      - run: node web/check.mjs

@@ -10,7 +10,7 @@ use crate::physics::Rope;
 use crate::glyphs::Glyphs;
 use crate::rage::{Combo, Heat};
 use crate::render::{Canvas, ComboView, Scene};
-use crate::sound::Sound;
+use crate::sound::{self, Sound};
 use crate::swing::{Event, Swing};
 use crate::{brand, effects, messages, whips};
 use eframe::egui;
@@ -118,7 +118,7 @@ struct Whip {
     spawned: Instant,
 }
 
-fn tip_image(cfg: &Config) -> Option<tiny_skia::Pixmap> {
+fn tip_image(cfg: &Config) -> Option<crate::tipimg::Tip> {
     cfg.custom_tips.get(&cfg.whip).and_then(|p| crate::tipimg::load(p))
 }
 
@@ -146,7 +146,7 @@ struct App {
     mark: Option<Mark>,
     swing: Swing,
     glyphs: Option<Glyphs>,
-    tip_img: Option<tiny_skia::Pixmap>,
+    tip_img: Option<crate::tipimg::Tip>,
     fx: effects::Fx,
     ctx: egui::Context,
     tray_light: bool,
@@ -230,6 +230,7 @@ impl App {
             tray,
         };
         // ON = the tool is live (hotkeys, cracks); the whip only appears with the show/hide hotkey.
+        app.sound.set_loadout(sound::loadout(&app.cfg));
         app.sync_hotkeys();
         app.sync_menu();
         Ok(app)
@@ -302,6 +303,9 @@ impl App {
         let old = std::mem::replace(&mut self.cfg, cfg);
         self.sync_menu();
         self.sound.set_volume(self.cfg.volume, self.cfg.sfx_volume);
+        if (old.whip, &old.custom_cracks, &old.custom_sfx) != (self.cfg.whip, &self.cfg.custom_cracks, &self.cfg.custom_sfx) {
+            self.sound.set_loadout(sound::loadout(&self.cfg));
+        }
         self.sync_hotkeys();
         if !self.cfg.rage {
             // The heat meter is switched off: nothing of it stays on the screen.
@@ -395,7 +399,7 @@ impl App {
             return;
         }
         let def = whips::def(self.cfg.whip);
-        self.sound.crack(def.cracks, def.sounds);
+        self.sound.crack();
         if self.cfg.rage {
             self.heat.crack();
         }
@@ -475,14 +479,10 @@ impl App {
             WM_RELOAD => self.reload_config(),
             WM_RESET => self.type_reset(),
             WM_TEST => {
-                let def = whips::def(self.cfg.whip);
-                self.sound.preview(def.cracks, def.sounds);
+                self.sound.preview();
                 self.start_burst();
             }
-            WM_SOUND => {
-                let def = whips::def(self.cfg.whip);
-                self.sound.preview(def.cracks, def.sounds);
-            }
+            WM_SOUND => self.sound.preview(),
             WM_QUIT_ENGINE => self.quit = true,
             _ => {}
         }
@@ -585,10 +585,6 @@ impl App {
                 self.shown.clone_from(pts);
             }
         }
-        match (def.trail, &self.whip) {
-            (Some(rgb), Some(whip)) if !whip.dropping => self.fx.trail(*whip.rope.pts.last().expect("a rope has points"), rgb),
-            _ => self.fx.trail_end(),
-        }
         let mouse_still = mouse == self.mouse_prev;
         self.mouse_prev = mouse;
         if let Some(dir) = cracked {
@@ -615,7 +611,7 @@ impl App {
         }
         // The canvas repaints only what differs from the last frame: a still scene costs nothing.
         let scene = Scene {
-            whip: self.whip.as_ref().map(|_| (&self.shown[..], def, self.tip_img.as_ref())),
+            whip: self.whip.as_ref().map(|_| (&self.shown[..], def, self.tip_img.as_ref().map(|tip| tip.frame_at(t)))),
             flash,
             glow: self.heat.glow() * level,
             edges,
@@ -644,7 +640,9 @@ impl App {
         // Idle frame (nothing drawn, mouse still, whip hanging on the mouse): sleep until input
         // instead of waking for every compositor frame.
         if !drew && mouse_still && self.held() {
-            unsafe { MsgWaitForMultipleObjects(None, false, IDLE_WAIT_MS, QS_ALLINPUT) };
+            // An animated tip ends the wait at its next frame; a still scene waits the full time.
+            let wait = self.tip_img.as_ref().and_then(|tip| tip.next_change(t)).map_or(IDLE_WAIT_MS, |s| ((s * 1000.0).ceil() as u32).clamp(1, IDLE_WAIT_MS));
+            unsafe { MsgWaitForMultipleObjects(None, false, wait, QS_ALLINPUT) };
         } else {
             vsync(now);
         }
