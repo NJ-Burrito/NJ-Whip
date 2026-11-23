@@ -36,7 +36,7 @@
 
 ## ⬇️ Get it
 
-1. Download **[`NJ-Whip.exe`](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe)** (version 0.5.0, about 8 MB).
+1. Download **[`NJ-Whip.exe`](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe)** (version 0.5.1, about 8 MB).
 2. Run it. The window opens and the monogram appears in the tray.
 3. Flip the switch to **On**.
 

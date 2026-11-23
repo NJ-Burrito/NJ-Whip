@@ -1,6 +1,6 @@
 [package]
 name = "nj-whip"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 description = "An on-screen whip for Claude Code on Windows: swing it, it cracks and types a short message that steers how Claude works."
 license = "MIT"
@@ -19,7 +19,7 @@ skrifa = "0.44"
 serde = { version = "1", features = ["derive"] }
 tiny-skia = { version = "0.12", default-features = false, features = ["std", "simd", "png-format"] }
 toml = "0.8"
-tray-icon = "0.26"
+tray-icon = { version = "0.26", default-features = false } # Windows-only app: no Linux gtk3/libappindicator (drops glib 0.18 + proc-macro-error advisories)
 windows = { version = "0.58", features = [
     "Win32_Foundation",
     "Win32_Graphics_Dwm",
