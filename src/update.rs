@@ -58,7 +58,12 @@ pub fn check() -> Result<Option<Version>, String> {
     let json = fs::read_to_string(&tmp).map_err(|e| e.to_string());
     let _ = fs::remove_file(&tmp);
     let latest = tag_of(&json?).and_then(version).ok_or("GitHub's answer had no version in it")?;
-    Ok((latest > current()).then_some(latest))
+    Ok(newer(latest, current()))
+}
+
+/// `latest` only when it is strictly newer than `now` (the same version is never installed again).
+fn newer(latest: Version, now: Version) -> Option<Version> {
+    (latest > now).then_some(latest)
 }
 
 /// Puts the downloaded `new` file in place of `exe` (the running program is moved aside to
@@ -149,5 +154,34 @@ mod tests {
     #[ignore]
     fn live_check() {
         println!("newer than {}: {:?}", dotted(current()), check().unwrap());
+    }
+
+    // mutation testing (cargo-mutants, 2026-11-24)
+    #[test]
+    fn only_a_strictly_newer_release_is_offered() {
+        assert_eq!(newer([0, 5, 1], [0, 5, 0]), Some([0, 5, 1]));
+        assert_eq!(newer([0, 5, 0], [0, 5, 0]), None, "the same version is not installed again");
+        assert_eq!(newer([0, 4, 9], [0, 5, 0]), None, "an older release is never offered");
+        assert_eq!(newer([1, 0, 0], [0, 99, 99]), Some([1, 0, 0]));
+    }
+
+    #[test]
+    fn the_running_version_is_the_package_version() {
+        assert_eq!(Some(current()), version(env!("CARGO_PKG_VERSION")));
+        assert_ne!(current(), [0, 0, 0]);
+    }
+
+    #[test]
+    fn a_program_one_byte_under_the_minimum_is_refused() {
+        let dir = std::env::temp_dir().join(format!("njw-update-min-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let (exe, new) = (dir.join("NJ-Whip.exe"), dir.join("NJ-Whip.new"));
+        fs::write(&exe, b"old program").unwrap();
+        let mut small = b"MZ".to_vec();
+        small.resize(MIN_EXE as usize - 1, 7);
+        fs::write(&new, &small).unwrap();
+        assert!(put_in_place(&new, &exe).is_err(), "MZ but too small: a cut-off download");
+        assert_eq!(fs::read(&exe).unwrap(), b"old program");
+        let _ = fs::remove_dir_all(&dir);
     }
 }

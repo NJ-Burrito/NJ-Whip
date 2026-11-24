@@ -231,4 +231,38 @@ mod tests {
         assert!(load_from(&p).is_err(), "defaults here would be saved over the user's settings");
         let _ = fs::remove_dir_all(dir);
     }
+
+    // mutation testing (cargo-mutants, 2026-11-24)
+    #[test]
+    fn a_file_that_cannot_be_read_is_an_error_not_the_defaults() {
+        let dir = tmp("isdir");
+        fs::create_dir_all(dir.join("config.toml")).unwrap(); // a folder where the file should be
+        assert!(load_from(&dir.join("config.toml")).is_err());
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn user_lines_are_the_current_whips_and_only_when_there_are_some() {
+        let mut c = Config { whip: WhipId::Neon, ..Config::default() };
+        assert_eq!(c.user_lines(), None);
+        c.custom_lines.insert(WhipId::Neon, vec![]);
+        assert_eq!(c.user_lines(), None, "an empty list means: use the whip's own lines");
+        c.custom_lines.insert(WhipId::Zen, vec!["calm".into()]);
+        assert_eq!(c.user_lines(), None, "another whip's lines are not this whip's");
+        c.custom_lines.insert(WhipId::Neon, vec!["Zap".into(), "Pow".into()]);
+        assert_eq!(c.user_lines(), Some(&["Zap".to_string(), "Pow".to_string()][..]));
+    }
+
+    #[test]
+    fn style_carries_the_four_message_settings() {
+        let c = Config { pack: Pack::PlanFirst, profile: Profile::Heavy, always_esc: true, harder_ultrathink: true, ..Config::default() };
+        let s = c.style();
+        assert!(s.pack == Pack::PlanFirst && s.profile == Profile::Heavy && s.always_esc && s.harder_ultrathink);
+    }
+
+    #[test]
+    fn the_config_lives_in_appdata_nj_whip() {
+        let p = config_path();
+        assert!(p.ends_with(Path::new("NJ-Whip").join("config.toml")), "{}", p.display());
+    }
 }
