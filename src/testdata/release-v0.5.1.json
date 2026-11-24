@@ -1,0 +1,43 @@
+{
+  "url": "https://api.github.com/repos/NJ-Burrito/NJ-Whip/releases/455454191",
+  "assets_url": "https://api.github.com/repos/NJ-Burrito/NJ-Whip/releases/455454191/assets",
+  "upload_url": "https://uploads.github.com/repos/NJ-Burrito/NJ-Whip/releases/455454191/assets{?name,label}",
+  "html_url": "https://github.com/NJ-Burrito/NJ-Whip/releases/tag/v0.5.1",
+  "id": 455454191,
+  "author": {
+    "login": "NJ-Burrito"
+  },
+  "node_id": "RE_kwDOVwd-hc4bJa3v",
+  "tag_name": "v0.5.1",
+  "target_commitish": "main",
+  "name": "NJ-Whip 0.5.1",
+  "draft": false,
+  "immutable": false,
+  "prerelease": false,
+  "created_at": "2026-11-23T13:18:40Z",
+  "updated_at": "2026-11-23T13:18:56Z",
+  "published_at": "2026-11-23T13:18:56Z",
+  "assets": [
+    {
+      "url": "https://api.github.com/repos/NJ-Burrito/NJ-Whip/releases/assets/783025738",
+      "id": 783025738,
+      "node_id": "RA_kwDOVwd-hc4urAZK",
+      "name": "NJ-Whip.exe",
+      "label": "",
+      "uploader": {
+        "login": "NJ-Burrito"
+      },
+      "content_type": "application/x-msdownload",
+      "state": "uploaded",
+      "size": 8380928,
+      "digest": "sha256:b6de28f12e814bc616bd519d0d82042c01cf43f4ad939319373e4dd76c14639d",
+      "download_count": 3,
+      "created_at": "2026-11-23T13:18:45Z",
+      "updated_at": "2026-11-23T13:18:56Z",
+      "browser_download_url": "https://github.com/NJ-Burrito/NJ-Whip/releases/download/v0.5.1/NJ-Whip.exe"
+    }
+  ],
+  "tarball_url": "https://api.github.com/repos/NJ-Burrito/NJ-Whip/tarball/v0.5.1",
+  "zipball_url": "https://api.github.com/repos/NJ-Burrito/NJ-Whip/zipball/v0.5.1",
+  "body": ""
+}

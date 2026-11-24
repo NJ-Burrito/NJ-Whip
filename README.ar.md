@@ -37,7 +37,7 @@
 
 ## ⬇️ احصل عليه
 
-1. نزل **[`NJ-Whip.exe`](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe)** (الإصدار 0.5.1، نحو 8 ميغابايت).
+1. نزل **[`NJ-Whip.exe`](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe)** (الإصدار 0.5.2، نحو 8 ميغابايت).
 2. شغله. تفتح النافذة ويظهر الشعار في منطقة الإشعارات.
 3. اقلب المفتاح إلى **تشغيل**.
 

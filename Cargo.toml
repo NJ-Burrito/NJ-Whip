@@ -1,6 +1,6 @@
 [package]
 name = "nj-whip"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2021"
 description = "An on-screen whip for Claude Code on Windows: swing it, it cracks and types a short message that steers how Claude works."
 license = "MIT"
@@ -26,6 +26,7 @@ windows = { version = "0.58", features = [
     "Win32_Graphics_Gdi",
     "Win32_Networking_WinInet",
     "Win32_Security",
+    "Win32_Security_Cryptography",
     "Win32_System_Com_Urlmon",
     "Win32_System_LibraryLoader",
     "Win32_System_Registry",
