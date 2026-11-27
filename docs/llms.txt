@@ -40,3 +40,5 @@
 - [Profile-Wrap](https://nj-burrito.github.io/Profile-Wrap/): by the same author
 - [Business-Wrap](https://nj-burrito.github.io/Business-Wrap/): by the same author
 - [Story-Wrap](https://nj-burrito.github.io/story-wrap/): by the same author
+- [NJ-Flush](https://nj-burrito.github.io/NJ-Flush/): by the same author, a free Windows RAM cleaner
+- [NJ-Sort](https://nj-burrito.github.io/NJ-Sort/): by the same author, keeps Windows desktop icons where you put them, even after File Explorer restarts

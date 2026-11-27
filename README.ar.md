@@ -204,3 +204,7 @@ cargo test --release
 | **Business-Wrap** | وثائق متطلبات بالعربية والإنجليزية مبنية على الأدلة، تصدر إلى PDF وDOCX | [الموقع](https://nj-burrito.github.io/Business-Wrap/) · [الكود](https://github.com/NJ-Burrito/Business-Wrap) |
 
 </div>
+| **NJ-Flush** | منظف مجاني لذاكرة Windows | [الموقع](https://nj-burrito.github.io/NJ-Flush/) · [الكود](https://github.com/NJ-Burrito/NJ-Flush) |
+| **NJ-Sort** | يبقي أيقونات سطح مكتب Windows حيث وضعتها، حتى بعد إعادة تشغيل مستكشف الملفات | [الموقع](https://nj-burrito.github.io/NJ-Sort/) · [الكود](https://github.com/NJ-Burrito/NJ-Sort) |
+| **Story-Wrap** | أدوات لـ Claude Code تصنع مقاطع قصص عربية متحركة | [الموقع](https://nj-burrito.github.io/story-wrap/) · [الكود](https://github.com/NJ-Burrito/Story-Wrap) |
+| **الموقع الشخصي** | نادر الزغول، مهندس أتمتة ضمان الجودة في عمان، الأردن | [الموقع](https://nj-burrito.github.io/ar/) |
