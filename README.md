@@ -197,3 +197,7 @@ cargo test --release
 | **NJ-Kit** | A working method for Claude Code: skills that each end in a script saying PASS or FAIL | [Site](https://nj-burrito.github.io/NJ-Kit/) · [Code](https://github.com/NJ-Burrito/NJ-Kit) |
 | **Profile-Wrap** | Plans, writes and checks LinkedIn posts | [Site](https://nj-burrito.github.io/Profile-Wrap/) · [Code](https://github.com/NJ-Burrito/Profile-Wrap) |
 | **Business-Wrap** | Arabic and English requirements documents from evidence, exported to PDF and DOCX | [Site](https://nj-burrito.github.io/Business-Wrap/) · [Code](https://github.com/NJ-Burrito/Business-Wrap) |
+| **NJ-Flush** | A free Windows RAM cleaner | [Site](https://nj-burrito.github.io/NJ-Flush/) · [Code](https://github.com/NJ-Burrito/NJ-Flush) |
+| **NJ-Sort** | Keeps your Windows desktop icons where you put them, even after File Explorer restarts | [Site](https://nj-burrito.github.io/NJ-Sort/) · [Code](https://github.com/NJ-Burrito/NJ-Sort) |
+| **Story-Wrap** | A Claude Code toolkit for Arabic animated story reels | [Site](https://nj-burrito.github.io/story-wrap/) · [Code](https://github.com/NJ-Burrito/Story-Wrap) |
+| **Portfolio** | Nader Alzghoul, QA Automation Engineer in Amman, Jordan | [Site](https://nj-burrito.github.io/) |
