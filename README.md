@@ -20,7 +20,7 @@
 
 **NJ-Whip is a free, open-source whip for Claude Code on Windows, made by [Nader Alzghoul](https://nj-burrito.github.io/) (NJ-Burrito).** Swing it and it cracks: its own sound, its own effect, and one short instruction typed to Claude. One small exe, no installer, no account.
 
-🌐 [Website](https://nj-burrito.github.io/NJ-Whip/) · 🕹️ [Try it in the browser](https://nj-burrito.github.io/NJ-Whip/#room) · ⬇️ [Get it](#get) · 🎯 [What it does for your work](#work) · 🧵 [The whips](#whips) · 🪟 [The window](#window) · 🪶 [Light on your PC](#light) · 🔒 [Privacy](#privacy)
+🌐 [Website](https://nj-burrito.github.io/NJ-Whip/) · 🕹️ [Try it in the browser](https://nj-burrito.github.io/NJ-Whip/#room) · ⬇️ [Get it](#get) · ✨ [New in 0.6](#new) · 🎯 [What it does for your work](#work) · 🧵 [The whips](#whips) · 🪟 [The window](#window) · 🪶 [Light on your PC](#light) · 🔒 [Privacy](#privacy)
 
 ---
 
@@ -36,13 +36,25 @@
 
 ## ⬇️ Get it
 
-1. Download **[`NJ-Whip.exe`](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe)** (version 0.5.2, about 8 MB).
+1. Download **[`NJ-Whip.exe`](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe)** (version 0.6.0, about 8 MB).
 2. Run it. The window opens and the monogram appears in the tray.
 3. Flip the switch to **On**.
 
 - 🖥️ **Needs:** Windows 10 (2004 or later) or Windows 11.
 - 🧹 **Remove:** delete the exe. Nothing is installed.
 - 🛡️ **SmartScreen:** the exe is not code-signed, so Windows may ask before the first run ("More info", then "Run anyway"). Or [build it yourself](#build).
+
+<a id="new"></a>
+
+## ✨ New in 0.6
+
+Version 0.6.0 is a pass over how NJ-Whip looks. What a crack types has not changed. [Latest release](https://github.com/NJ-Burrito/NJ-Whip/releases/latest).
+
+- 🎨 **A new logo and icon:** a new drawing of the N and J monogram, in the tray, the window and the favicon.
+- 🪢 **New tips:** Classic has a refined cracker, Cowboy a lasso loop, Drill Sergeant a whistle, Zen a temple bell and Pirate a hook. Chef's pan now holds an egg, and Elephant ends in a tuft of hide.
+- 💥 **All 15 crack effects redrawn:** richer particles and stamps.
+- 🪟 **A redesigned Settings window:** a large card for the chosen whip, cards for each group of settings, key caps for the hotkeys, and an Arabic layout that reads right to left.
+- 🧱 **Cleaner source:** the code is split into modules, and an off-screen frame renderer draws any whip or effect without opening the overlay ([`design/renderer.md`](design/renderer.md)).
 
 <a id="work"></a>
 
@@ -106,12 +118,13 @@
 | **Zen** | Careful | lightest | an ink circle | OM |
 | **Ninja** | Focus | light | a cut across the whole screen | SLICE |
 | **Pirate** | Faster | heavy | an X | ARR |
-| **Chef** | Careful | normal | a fried egg (the tip is a frying pan) | SIZZLE |
+| **Chef** | Careful | normal | a fried egg (the tip is a frying pan with an egg) | SIZZLE |
 | **Wizard** | Focus | light | a rune | POOF |
 | **Vine** | Careful | a little light | leaves and a flower | BLOOM |
 | **Penguin** | Faster | a little heavy | a snow pile | HONK |
 | **Storm** | Harder | a little heavy | a scorch | BOOM |
 
+- 🪢 **Tips:** Classic has a refined cracker, Cowboy a lasso loop, Drill Sergeant a whistle, Zen a temple bell, Pirate a hook, Chef a pan with an egg and Elephant a tuft of hide.
 - 🌀 **A swing has to be a swing.** A lazy back-and-forth only whooshes. Each snap cracks once.
 - 🔥 **Heat:** a meter fills with each crack (4 to full), then the screen edges glow in the whip's colour. Never red, no shake.
 - 🔢 **Streaks:** crack again in time and a combo label pops up ("STOMP ×3").
@@ -128,7 +141,7 @@
 
 | Tab | What is in it |
 |---|---|
-| **Whip** | The 15 whips. Picking one plays its sound |
+| **Whip** | The 15 whips, with the chosen one on a large card. Picking one plays its sound |
 | **Message** | The instruction pack and your own lines |
 | **Hotkeys** | The keys that call the whip and crack it |
 | **Options** | The heat meter, the swing crack, Start with Windows |
@@ -181,6 +194,8 @@ cargo test --release
 
 - 📦 **The exe:** `target\release\nj-whip.exe`.
 - 🔤 **Fonts:** the window uses the Thmanyah typefaces when they are installed, and the default font otherwise. No font ships in this repository or in the exe.
+- 🧱 **Module layout:** `src/app` (the engine), `src/whipdraw` (lash, handle and one file per tip), `src/effects` (one file per crack effect), `src/render` (layers, glow, heat meter) and `src/ui` (the window).
+- 🖼️ **Pictures without the overlay:** the live app types into other windows, so never run it to look at a whip. The off-screen frame renderer in [`design/renderer.md`](design/renderer.md) writes PNG frames and a contact sheet for any whip or effect.
 - 🌐 **The website's live whips:** `python web/build.py` builds the same engine to WebAssembly (`docs/assets/nj-whip.wasm`) and copies every sound `src/clips.rs` names.
 
 ## 📜 Licence and credits

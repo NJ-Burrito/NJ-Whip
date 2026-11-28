@@ -4,8 +4,8 @@
 
 - [Website, English](https://nj-burrito.github.io/NJ-Whip/): how it works, the 15 whips, the heat meter, what a crack types, honest notes, privacy, download
 - [Website, Arabic](https://nj-burrito.github.io/NJ-Whip/ar/): the same page in Arabic
-- [Download NJ-Whip.exe](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe): one small exe, about 6.5 MB, no installer
-- [All releases](https://github.com/NJ-Burrito/NJ-Whip/releases/latest): version 0.3.0 at the time of writing
+- [Download NJ-Whip.exe](https://github.com/NJ-Burrito/NJ-Whip/releases/latest/download/NJ-Whip.exe): one small exe, about 8 MB, no installer
+- [All releases](https://github.com/NJ-Burrito/NJ-Whip/releases/latest): version 0.6.0 at the time of writing
 - [Source code](https://github.com/NJ-Burrito/NJ-Whip): Rust source, README, MIT licence
 
 ## Answers
@@ -20,7 +20,8 @@
 - Does a crack interrupt Claude? Faster, Harder and Happier lines are queued without Esc, so nothing Claude is doing is cancelled. Careful and Focus lines are sent after Esc, so Claude stops before its next step.
 - What does the "Reset Claude" button do? It types "normal mode", then "Continue.".
 - Where does it type? Into whatever window you were in last. So it is made for Claude Code wherever you type to it: the VS Code panel, a terminal, the Claude desktop app, or claude.ai/code.
-- What does it need? Windows 10 2004 or later. One small exe, about 6.5 MB, no installer.
+- What does it need? Windows 10 2004 or later. One small exe, about 8 MB, no installer.
+- What is new in 0.6.0? A new logo and icon, new tips on Classic (refined cracker), Cowboy (lasso loop), Drill Sergeant (whistle), Zen (temple bell) and Pirate (hook), a pan with an egg for Chef, a tuft of hide for Elephant, all 15 crack effects redrawn, a redesigned Settings window (a large card for the chosen whip, key caps, Arabic right to left), and the source split into modules with an off-screen frame renderer (design/renderer.md).
 - Privacy: no account, no network calls, no telemetry. Settings live in %APPDATA%\NJ-Whip\config.toml.
 - Licence and price: MIT, free.
 - Is NJ-Whip made by Anthropic? No. It is an independent project by Nader Alzghoul, not affiliated with Anthropic.
@@ -30,7 +31,7 @@
 - A crack types into whatever window you were in last, a code editor included.
 - The exe is not code-signed, so Windows SmartScreen may ask before the first run.
 - The instruction wording has not been measured on live sessions.
-- 0.3.0 is an early release; not every one of these places (the VS Code panel, a terminal, the Claude desktop app, claude.ai/code) has been hand-tested yet.
+- 0.6.0 is an early release; not every one of these places (the VS Code panel, a terminal, the Claude desktop app, claude.ai/code) has been hand-tested yet.
 
 ## Related
 

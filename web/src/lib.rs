@@ -11,7 +11,7 @@
 //! (`std::time::Instant` does not exist on this target, so the combo is timed here in seconds).
 #![allow(dead_code)]
 
-#[path = "../../src/effects.rs"]
+#[path = "../../src/effects/mod.rs"]
 mod effects;
 #[path = "../../src/ink.rs"]
 mod ink;
@@ -21,11 +21,11 @@ mod messages;
 mod physics;
 #[path = "../../src/rage.rs"]
 mod rage;
-#[path = "../../src/render.rs"]
+#[path = "../../src/render/mod.rs"]
 mod render;
 #[path = "../../src/swing.rs"]
 mod swing;
-#[path = "../../src/whipdraw.rs"]
+#[path = "../../src/whipdraw/mod.rs"]
 mod whipdraw;
 #[path = "../../src/whips.rs"]
 mod whips;
