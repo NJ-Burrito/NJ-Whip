@@ -35,7 +35,7 @@ pub const ALL: [WhipId; 15] = [
 pub enum Pattern { Plain, Braid, Rings, Ribbon, Chunks }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Tip { Frayed, Bead, Tail, PomPom, Drip, Bloom, Penguin, Cloud, Kunai, Pan }
+pub enum Tip { Frayed, Bead, Tail, PomPom, Drip, Bloom, Penguin, Cloud, Kunai, Pan, Lasso, Whistle, Bell, Hook }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Effect { Sparks, Flash, Thump, Lasso, Confetti, Exclaim, Ripple, Slash, Spray, Sizzle, Magic, Splash, Petals, Snow, Lightning }
@@ -170,7 +170,7 @@ pub static CATALOGUE: [WhipDef; 15] = [
         vibe: Vibe { hue: 0xF0C674, screen: S::Jolt, shout: "STOMP" } },
     WhipDef { id: WhipId::Cowboy, name: "Cowboy", blurb: "Tan rawhide braid, brass knob. Dust and a lasso swirl.",
         look: look(12.0, 2.0, 0xB97A43, 0x5E3519, 0xE8B983, 0xE8B983, 0xF4D8AE, 0xF4D8AE, P::Braid, 0x7A4A26, 0xE8B983, 0xC9A04A, 0xC9A04A),
-        tip: Tip::Frayed, effect: E::Lasso, intent: I::Faster, cracks: &[sound::COWBOY_CRACK], sounds: &[sound::COWBOY],
+        tip: Tip::Lasso, effect: E::Lasso, intent: I::Faster, cracks: &[sound::COWBOY_CRACK], sounds: &[sound::COWBOY],
         lines: &["Giddy-up, partner! Straight trail ahead.", "Yeehaw! Straight trail, no detours:", "Main road, no side canyons.", "Dust rises on the short trail.", "Saddle up, one trail only.", "Yonder's the finish line, straight ahead."],
         physics: Params { points: 30, seg_len: 23.0, weight: 1.2, ..D },
         vibe: Vibe { hue: 0xE8B983, screen: S::Glow, shout: "YEEHAW" } },
@@ -188,14 +188,14 @@ pub static CATALOGUE: [WhipDef; 15] = [
         vibe: Vibe { hue: 0xFF8A4A, screen: S::Wobble, shout: "YUM" } },
     WhipDef { id: WhipId::DrillSergeant, name: "Drill Sergeant", blurb: "Olive webbing, brass buckle. A stern red “!”.",
         look: look(12.0, 2.4, 0x6B7A3A, 0x2F3818, 0xA9B97A, 0xA9B97A, 0xC9D59E, 0xA9B97A, P::Braid, 0x1E1F1B, 0x6B7A3A, 0x1E1F1B, 0xC9A04A),
-        tip: Tip::Frayed, effect: E::Exclaim, intent: I::Harder, cracks: &[sound::DRILL_CRACK], sounds: &[sound::DRILL],
+        tip: Tip::Whistle, effect: E::Exclaim, intent: I::Harder, cracks: &[sound::DRILL_CRACK], sounds: &[sound::DRILL],
         lines: &["Attention! No shortcuts on my watch.", "Inspection time! Every corner, by the book:", "Detail first. Every bolt, every seam.", "Chin up, shoulders back, eyes on detail.", "Boots polished, buttons checked, all of it:"],
         // a greener olive than the lash's 0xC9D59E: clear of the Elephant's gold, the other Jolt
         physics: Params { stiff_handle: 0.92, weight: 1.2, ..D },
         vibe: Vibe { hue: 0xBFD98F, screen: S::Jolt, shout: "HUP" } },
     WhipDef { id: WhipId::Zen, name: "Zen", blurb: "Silk thread on bamboo. An ink ripple and a falling petal.",
         look: look(6.0, 1.5, 0xF3EBDD, 0x7A6A55, 0xD8CDB8, 0xD8CDB8, 0xFFFFFF, 0x7A6A55, P::Plain, 0xC9B26E, 0x8A7A3E, 0xC9B26E, 0x8A7A3E),
-        tip: Tip::Frayed, effect: E::Ripple, intent: I::Careful, cracks: &[sound::ZEN_CRACK], sounds: &[sound::GONG],
+        tip: Tip::Bell, effect: E::Ripple, intent: I::Careful, cracks: &[sound::ZEN_CRACK], sounds: &[sound::GONG],
         lines: &["Breathe in. Look twice. Then act.", "Slow hands, steady mind.", "Pause. One careful step at a time.", "Empty the cup. Read before you write:", "Gentle with the code, sure with changes."],
         physics: Params { seg_len: 22.0, gravity: 1.2, stiff_tip: 0.1, damping: 0.96, tip_damping: 0.93, weight: 0.6, ..D },
         vibe: Vibe { hue: 0xFFC2D6, screen: S::Fall, shout: "OM" } },
@@ -207,7 +207,7 @@ pub static CATALOGUE: [WhipDef; 15] = [
         vibe: Vibe { hue: 0x7C8CFF, screen: S::Sides, shout: "SLICE" } },
     WhipDef { id: WhipId::Pirate, name: "Pirate", blurb: "Tarred hemp, cutlass hilt. Sea spray and a cannon puff.",
         look: look(12.0, 2.4, 0x6B4E2E, 0x2E2010, 0xA88B5E, 0xA88B5E, 0xC9B08A, 0xC9B08A, P::Braid, 0x3A2A18, 0xC9A04A, 0xC9A04A, 0xC9A04A),
-        tip: Tip::Frayed, effect: E::Spray, intent: I::Faster, cracks: &[sound::PIRATE_CRACK], sounds: &[sound::PIRATE],
+        tip: Tip::Hook, effect: E::Spray, intent: I::Faster, cracks: &[sound::PIRATE_CRACK], sounds: &[sound::PIRATE],
         lines: &["Arr! One course, no island-hopping:", "Wind's up, matey! Straight course ahead.", "Steady wind, one heading, sails trimmed.", "X marks the spot, straight ahead.", "Cannon's loaded. Aim straight:"],
         physics: Params { weight: 1.3, ..D },
         vibe: Vibe { hue: 0x3FD9B4, screen: S::Wobble, shout: "ARR" } },

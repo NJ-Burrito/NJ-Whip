@@ -1,0 +1,264 @@
+<!doctype html>
+<!-- NJ-Whip media scenes. Driven by media/make_media.py in headless Chromium; never opened by a visitor.
+     The whips, effects, heat meter and glow are the site's own engine (docs/assets/nj-whip.wasm).
+     Type: Thmanyah only, taken from the installed fonts by name (no font file lives in this repo). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NJ-Whip media scene</title>
+<style>
+@font-face{font-family:"TMD";font-weight:700;src:local("Thmanyah Serif Display Bold"),local("thmanyahserifdisplay-Bold"),local("Thmanyah Serif Display")}
+@font-face{font-family:"TMS";font-weight:500;src:local("Thmanyah Sans Medium"),local("thmanyahsans-Medium"),local("Thmanyah Sans")}
+@font-face{font-family:"TMS";font-weight:900;src:local("Thmanyah Sans Black"),local("thmanyahsans-Black"),local("Thmanyah Sans")}
+:root{--bg:#0A1024;--panel:#121B38;--sel:#1A2750;--ink:#F2F7FF;--muted:#A9B8D6;--accent:#8FDCFF;--line:#24305A;--hue:#8FDCFF;
+  --display:"TMD","Thmanyah Serif Display",serif;--sans:"TMS","Thmanyah Sans",sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg)}
+body{font-family:var(--sans);font-weight:500;color:var(--ink);overflow:hidden;position:relative;-webkit-font-smoothing:antialiased}
+.scene{position:relative;width:var(--W);height:var(--H);overflow:hidden;
+  background:radial-gradient(900px 520px at 78% 52%,color-mix(in srgb,var(--hue) 13%,transparent),transparent 70%),radial-gradient(700px 400px at 8% 0%,#16224A 0%,transparent 70%),var(--bg)}
+.mirror{direction:rtl}
+.brand{position:absolute;display:flex;align-items:center;gap:12px}
+.brand img{width:40px;height:40px;border-radius:10px;display:block}
+.brand b{font-family:var(--display);font-weight:700;font-size:26px;direction:ltr}
+h1{position:absolute;margin:0;font-family:var(--display);font-weight:700;font-size:42px;line-height:1.08;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--accent)}
+.pills{position:absolute;display:flex;gap:9px;flex-wrap:nowrap}
+.pill{display:flex;align-items:center;gap:8px;height:36px;padding:0 15px 0 5px;border:1.5px solid #3B5C93;border-radius:999px;font-weight:900;font-size:17px;white-space:nowrap;color:var(--ink);transition:none}
+.mirror .pill{padding:0 5px 0 15px}
+.pill i{font-style:normal;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--bg);font-size:15px;font-weight:900}
+.pill.on{background:var(--sel);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.card{position:absolute;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#131C3B,#0F1730);overflow:hidden}
+.card .hd{display:flex;justify-content:space-between;align-items:center;height:36px;padding:0 14px;border-bottom:1px solid var(--line);font-size:15px;color:var(--muted)}
+.card .hd b{color:var(--accent);font-weight:900;letter-spacing:.01em}
+.card .bd{padding:11px 14px;font-weight:900;font-size:19px;line-height:1.38;direction:ltr;text-align:left;white-space:pre-wrap}
+.card .bd s{text-decoration:none;color:var(--accent)}
+.caret{display:inline-block;width:.62em;height:1.05em;background:#8FDCFF;vertical-align:-.17em;margin-left:.2em;opacity:.9}
+.foot{position:absolute;display:flex;justify-content:space-between;align-items:center;font-size:15px;color:var(--muted)}
+.foot b{color:var(--ink);font-weight:900;direction:ltr}
+.stage{position:absolute;border:1px solid color-mix(in srgb,var(--hue) 32%,var(--line));border-radius:16px;overflow:hidden;background:var(--bg);
+  box-shadow:0 0 60px color-mix(in srgb,var(--hue) 16%,transparent),0 18px 40px rgba(0,0,0,.35)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cursor{position:absolute;width:22px;height:22px;margin:-2px 0 0 -2px;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.chipw{position:absolute;display:flex;align-items:center;gap:9px;height:36px;padding:0 15px;border:1.5px solid var(--hue);border-radius:999px;background:rgba(18,27,56,.88);font-weight:900;font-size:17px;white-space:nowrap}
+.chipw u{width:11px;height:11px;border-radius:50%;background:var(--hue);display:block}
+.shout{position:absolute;font-family:var(--display);font-weight:700;line-height:1;white-space:nowrap;color:var(--hue);-webkit-text-stroke:.1em #0B1220;paint-order:stroke fill;text-shadow:.07em .1em .06em rgba(0,0,0,.4);opacity:0;pointer-events:none;direction:ltr}
+.shout.five{color:#fff;-webkit-text-stroke-color:var(--hue)}
+/* the three layouts: hero (960 wide), banner (1280x640) */
+.hero .brand{left:32px;top:27px}
+.hero h1{left:32px;top:76px;width:380px}
+.hero .pills{left:32px;top:188px}
+.hero .card{left:32px;top:243px;width:374px;height:calc(var(--H) - 286px)}
+.hero .foot{left:32px;right:25px;bottom:0;height:43px;padding-bottom:3px}
+.hero .stage{left:425px;top:27px;width:510px}
+.hero.mirror .brand,.hero.mirror h1,.hero.mirror .pills,.hero.mirror .card{left:auto;right:32px}
+.hero.mirror .stage{left:25px}
+.hero.mirror .foot{left:25px;right:32px}
+.hero.mirror h1{text-align:right;width:390px}
+.hero.mirror .card .hd{flex-direction:row-reverse}
+.hero.mirror .brand{flex-direction:row}
+.hero.mirror .pills{right:32px}
+.hero .chipw{left:14px;bottom:14px}
+.hero.mirror .chipw{left:auto;right:14px}
+.banner .brand{left:72px;top:150px;gap:22px}
+.banner .brand img{width:88px;height:88px;border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.banner .brand b{font-size:88px;letter-spacing:-.02em;line-height:1}
+.banner h1{left:72px;top:280px;font-size:44px;width:520px}
+.banner .pills{left:72px;top:452px}
+.banner .pill{height:44px;font-size:22px;padding:0 20px 0 6px;background:rgba(18,27,56,.6)}
+.banner .pill i{width:32px;height:32px;font-size:18px}
+.banner .stage{left:600px;top:70px;width:470px;height:400px;transform:rotate(-4deg);transform-origin:50% 50%;border-radius:20px;border-color:color-mix(in srgb,var(--hue) 45%,var(--line));box-shadow:0 30px 70px rgba(0,0,0,.5),0 0 80px color-mix(in srgb,var(--hue) 20%,transparent)}
+.banner .win{position:absolute;left:985px;top:250px;width:250px;border:1px solid #3B4C7F;border-radius:16px;overflow:hidden;transform:rotate(3deg);box-shadow:0 30px 60px rgba(0,0,0,.6);background:#0A1024}
+.banner .win img{display:block;width:100%}
+.banner .chipw{left:16px;bottom:16px}
+.banner .foot{left:76px;right:76px;bottom:44px}
+.banner .foot b{font-size:22px}
+</style>
+</head>
+<body>
+<div class="scene" id="scene"></div>
+<script>
+'use strict';
+const $ = (s, el) => (el || document).querySelector(s);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+let X = null, cat = null;
+const TXT = {
+  en: { dir: 'ltr', h1: 'Steer <em>Claude Code</em> with a crack.', pills: ['Call it', 'Crack it', 'It types'],
+        foot: '15 whips · 5 directions · free, MIT, Windows', url: 'nj-burrito.github.io/NJ-Whip',
+        intents: ['FASTER', 'HARDER', 'CAREFUL', 'HAPPIER', 'FOCUS'], queued: 'queued, no Esc', esc: 'sent after Esc', num: (n) => n },
+  ar: { dir: 'rtl', h1: 'وجّه <bdi dir="ltr">Claude Code</bdi><br>بفرقعة سوط', pills: ['أظهره', 'فرقعه', 'يكتب عنك'],
+        foot: '١٥ سوطا · ٥ اتجاهات · مجاني، MIT، <bdi dir="ltr">Windows</bdi>', url: 'nj-burrito.github.io/NJ-Whip',
+        intents: ['أسرع', 'أكثر اجتهادا', 'أكثر حذرا', 'أكثر بهجة', 'تركيز'], queued: 'في قائمة الانتظار، دون Esc', esc: 'يرسل بعد Esc', num: (n) => n },
+};
+const CURSOR = '<svg viewBox="0 0 22 22"><path d="M3 2l14 8.5-6.2 1.6 3.6 6.4-2.7 1.5-3.6-6.4L4.6 18z" fill="#fff" stroke="#0B1220" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+
+async function boot() {
+  const m = await WebAssembly.instantiate(await (await fetch('/docs/assets/nj-whip.wasm')).arrayBuffer(), {});
+  X = m.instance.exports;
+  X.seed(2026, 11);
+  const at = X.catalogue(), len = X.catalogue_len();
+  cat = JSON.parse(new TextDecoder().decode(new Uint8Array(X.memory.buffer, at, len)));
+  await document.fonts.load('700 20px TMD'); await document.fonts.load('500 20px TMS'); await document.fonts.load('900 20px TMS');
+  return { whips: cat.whips.map((w) => w.name), fonts: [...document.fonts].map((f) => f.family + f.weight + f.status) };
+}
+const whipIndex = (name) => cat.whips.findIndex((w) => w.name === name);
+
+class Stage {
+  constructor(canvas, w, h, seg, opts) {
+    this.c = canvas; this.w = canvas.width = w; this.h = canvas.height = h; this.ctx = canvas.getContext('2d');
+    this.id = X.stage_new(w, h, seg); if (this.id === 0xFFFFFFFF) throw new Error('stage');
+    X.stage_opts(this.id, opts); this.x = w / 2; this.y = h / 2; this.cracks = 0;
+  }
+  get out() { return new Float32Array(X.memory.buffer, X.stage_out(this.id), 16); }
+  take(i, x, y, settle) { this.x = x; this.y = y; X.stage_whip(this.id, i, x, y); if (settle) X.stage_settle(this.id, settle); }
+  frame(dt) { return X.stage_frame(this.id, dt, this.x, this.y); }
+  crack(dir) { X.stage_crack(this.id, dir); }
+  reset() { X.stage_reset(this.id); }
+  paint() { this.ctx.putImageData(new ImageData(new Uint8ClampedArray(X.memory.buffer.slice(X.stage_pixels(this.id), X.stage_pixels(this.id) + this.w * this.h * 4)), this.w, this.h), 0, 0); }
+  free() { X.stage_free(this.id); }
+}
+
+/* the combo label as page text, by age (the app's 1.5 s) */
+function shoutAt(el, st, w, age, n, zoom) {
+  const o = st.out, k = zoom || 1;
+  if (age < 0 || age > 1.5 || n < 2) { el.style.opacity = 0; return; }
+  const s = el.style;
+  el.textContent = w.shout + ' ×' + n;
+  s.fontSize = (30 + 3 * Math.min(n, 12)) + 'px';
+  s.left = clamp((o[8] + o[10] * 24) / st.w * 100, 30, 70) + '%';
+  s.top = clamp((o[9] - 90) / st.h * 100, 24, 92) + '%';
+  const f = age / 1.5, pop = f < 0.09 ? 1 + 0.6 * (1 - f / 0.09) : 1;
+  const op = f < 0.76 ? 1 : 1 - (f - 0.76) / 0.24;
+  const rise = f < 0.76 ? 0 : (f - 0.76) / 0.24 * 1.1;
+  s.opacity = op;
+  s.transform = `translate(-50%, calc(-100% - ${rise}em)) rotate(${o[10] > 0 ? -6 : -3}deg) scale(${pop})`;
+  s.setProperty('--hue', w.hue);
+  el.classList.toggle('five', n % 5 === 0);
+}
+
+const S = { };
+function el(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; }
+
+/* ---- the hero scene: four whips, each one appears, cracks three times, and types its line ---- */
+const BEAT = 3.4, T0 = 0.95, GAP = 0.7;
+function heroBuild(o) {
+  const L = TXT[o.lang], sc = $('#scene');
+  document.documentElement.style.setProperty('--W', o.w + 'px'); document.documentElement.style.setProperty('--H', o.h + 'px');
+  sc.className = 'scene hero' + (L.dir === 'rtl' ? ' mirror' : '');
+  sc.setAttribute('dir', L.dir);
+  const sh = o.h - 70;
+  sc.innerHTML = `
+   <div class="brand"><img src="/docs/assets/logo.png" alt=""><b>NJ-Whip</b></div>
+   <h1>${L.h1}</h1>
+   <div class="pills"><span class="pill"><i>1</i>${L.pills[0]}</span><span class="pill"><i>2</i>${L.pills[1]}</span><span class="pill"><i>3</i>${L.pills[2]}</span></div>
+   <div class="card"><div class="hd"><span>Claude Code</span><b id="tag"></b></div><div class="bd" id="typed"></div></div>
+   <div class="foot"><span>${L.foot}</span><b>${L.url}</b></div>
+   <div class="stage" style="height:${sh}px"><canvas id="cv"></canvas><div class="shout" id="sh"></div><div class="cursor" id="cur">${CURSOR}</div>
+     <div class="chipw" id="chip"><u></u><span></span></div></div>`;
+  sc.style.setProperty('--W', o.w + 'px'); sc.style.setProperty('--H', o.h + 'px');
+  const cv = $('#cv'), st = new Stage(cv, 510, sh, o.seg || 0.85, 2);
+  S.o = o; S.L = L; S.st = st; S.sh = sh; S.simT = 0; S.beat = -1; S.cracked = 0; S.lastCrack = -9; S.n = 0; S.text = '';
+  S.whips = o.whips.map(whipIndex);
+  S.cx = 510 * 0.50; S.cy = sh * (o.hy || 0.30); S.amp = o.amp || 0.19;
+}
+function heroHand(t) {
+  const amp = S.amp * 510 * clamp((t - 0.2) / 0.6, 0, 1) * clamp((T0 + 2 * GAP + 0.5 - t) / 0.7, 0, 1);
+  return [S.cx + amp * Math.sin(Math.PI * (t - T0) / GAP), S.cy + 9 * Math.sin(t * 2.2)];
+}
+function heroTake(b) {
+  const i = S.whips[b], w = cat.whips[i], st = S.st;
+  st.reset(); S.n = 0; S.lastCrack = -9; S.cracked = 0;
+  st.take(i, ...heroHand(0), 200);
+  st.frame(0);
+  const n = cat.intents.indexOf(w.intent), row = cat.packs[0].rows[n];
+  S.text = w.lines[0].trim() + ' ' + row.light;
+  S.intent = n; S.esc = row.esc; S.w = w;
+  document.documentElement.style.setProperty('--hue', w.hue);
+  $('#chip span').textContent = w.name + ' · ' + S.L.intents[n];
+}
+function heroSim() {
+  const dt = 1 / 60, st = S.st;
+  const b = Math.min(S.o.whips.length - 1, Math.floor(S.simT / BEAT)), t = S.simT - b * BEAT;
+  if (b !== S.beat) { S.beat = b; heroTake(b); S.beatStart = S.simT; }
+  [st.x, st.y] = heroHand(t);
+  const due = Math.floor((t - T0) / GAP + 1e-6) + 1; // cracks due so far (0..3)
+  if (due > S.cracked && S.cracked < 3 && t >= T0) { S.cracked++; S.n = S.cracked; S.lastCrack = S.simT; st.crack(S.cracked % 2 ? 1 : -1); S.firstCrack = S.firstCrack; }
+  st.frame(dt);
+  S.simT += dt; S.t = t;
+}
+function heroPaint() {
+  const st = S.st, w = S.w, t = S.t, b = S.beat, L = S.L;
+  st.paint();
+  const age = S.simT - S.lastCrack;
+  shoutAt($('#sh'), st, w, age, S.n);
+  // the stage crossfades between whips
+  const fadeIn = clamp(t / 0.25, 0, 1), fadeOut = clamp((BEAT - t) / 0.18, 0, 1);
+  $('#cv').style.opacity = Math.min(fadeIn, fadeOut);
+  const cur = $('#cur'); cur.style.opacity = Math.min(fadeIn, fadeOut);
+  cur.style.left = st.x + 'px'; cur.style.top = st.y + 'px';
+  // typing starts a little after the first crack: 4 characters per output frame (80 per second)
+  const typedFor = S.cracked ? clamp((t - T0 - 0.15) * 80, 0, S.text.length) : 0;
+  const shown = S.text.slice(0, Math.floor(typedFor));
+  const done = shown.length >= S.text.length;
+  const bd = $('#typed'), blink = done ? Math.floor(S.simT * 2.5) % 2 === 0 : true;
+  bd.innerHTML = !S.cracked ? `<s>&gt;</s> <span class="caret"></span>` : `<s>&gt;</s> ${shown.replace(/&/g, '&amp;').replace(/</g, '&lt;')}${blink ? '<span class="caret"></span>' : ''}`;
+  $('#tag').textContent = S.cracked ? S.L.intents[S.intent] + ' · ' + (S.esc ? S.L.esc : S.L.queued) : '';
+  bd.style.opacity = fadeOut;
+  const pills = document.querySelectorAll('.pill');
+  const step = !S.cracked ? 0 : (t < T0 + 0.5 ? 1 : 2);
+  pills.forEach((p, i) => p.classList.toggle('on', i === step));
+}
+function heroFrame(k, fps) {
+  const target = k / fps;
+  while (S.simT < target - 1e-6) heroSim();
+  heroPaint();
+}
+
+/* ---- a held pose: n cracks at the tip, then the picture (heat, room, stills) ---- */
+function poseOn(cv, shEl, o) {
+  const i = whipIndex(o.whip), w = cat.whips[i];
+  const st = new Stage(cv, o.w, o.h, o.seg || 0.9, 2);
+  X.seed(o.seed || 7, 3);
+  st.reset();
+  const hand = (t) => [o.w * (o.hx || 0.42) + 0.17 * o.w * Math.sin(Math.PI * t / 0.7) * (o.amp ?? 1), o.h * (o.hy || 0.58) + 10 * Math.sin(t * 2.2)];
+  st.take(i, ...hand(0), 200); st.frame(0);
+  let t = 0;
+  for (let k = 0; k < o.cracks; k++) {
+    const until = (k + 1) * 0.7;
+    while (t < until) { [st.x, st.y] = hand(t); st.frame(1 / 60); t += 1 / 60; }
+    st.crack(k % 2 ? -1 : 1);
+  }
+  for (let k = 0; k < (o.frames ?? 66); k++) { [st.x, st.y] = hand(t); st.frame(1 / 60); t += 1 / 60; }
+  st.paint();
+  if (o.label !== false) shoutAt(shEl, st, w, o.labelAge ?? 0.12, st.out[6]);
+  document.documentElement.style.setProperty('--hue', w.hue);
+  S.st = st;
+  return { cracks: st.cracks, combo: st.out[6], heat: st.out[11], name: w.name, intent: w.intent };
+}
+function pose(o) {
+  const sc = $('#scene');
+  document.documentElement.style.setProperty('--W', o.w + 'px'); document.documentElement.style.setProperty('--H', o.h + 'px');
+  sc.className = 'scene'; sc.removeAttribute('dir');
+  sc.style.background = 'var(--bg)';
+  sc.innerHTML = `<div style="position:absolute;inset:0"><canvas id="cv" style="position:absolute;inset:0;width:100%;height:100%"></canvas><div class="shout" id="sh"></div></div>`;
+  return poseOn($('#cv'), $('#sh'), o);
+}
+
+/* ---- the banner (GitHub social preview) ---- */
+function banner(o) {
+  const sc = $('#scene');
+  document.documentElement.style.setProperty('--W', '1280px'); document.documentElement.style.setProperty('--H', '640px');
+  sc.className = 'scene banner'; sc.setAttribute('dir', 'ltr');
+  sc.innerHTML = `
+   <div class="brand"><img src="/docs/assets/logo.png" alt=""><b>NJ-<span style="color:var(--accent)">Whip</span></b></div>
+   <h1>Steer <em>Claude Code</em><br>with a crack.</h1>
+   <div class="pills"><span class="pill"><i>1</i>Call it</span><span class="pill"><i>2</i>Crack it</span><span class="pill"><i>3</i>It types</span></div>
+   <div class="stage"><canvas id="cv"></canvas><div class="shout" id="sh"></div><div class="chipw"><u></u><span id="nm"></span></div></div>
+   <div class="win"><img src="/${o.window}" alt=""></div>`;
+  const r = poseOn($('#cv'), $('#sh'), { ...o, w: 470, h: 400 });
+  $('#nm').textContent = r.name + ' · ' + TXT.en.intents[cat.intents.indexOf(r.intent)];
+  return r;
+}
+</script>
+</body>
+</html>

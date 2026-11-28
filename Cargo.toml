@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "nj-whip"
-version = "0.5.2"
+version = "0.6.0"
 edition = "2021"
 description = "An on-screen whip for Claude Code on Windows: swing it, it cracks and types a short message that steers how Claude works."
 license = "MIT"

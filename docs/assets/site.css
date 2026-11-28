@@ -329,3 +329,5 @@ footer nav a{display:inline-flex;align-items:center;min-height:2.75rem;color:var
   /* the label still shows, without the pop and the drift */
   .shout.on{animation:none;opacity:1}
 }
+.foot-brand{display:inline-flex;align-items:center;gap:.7rem;min-height:2.75rem;margin-bottom:1rem;font-family:var(--display);font-weight:700;font-size:1.25rem;color:var(--ink);text-decoration:none}
+.foot-brand img{width:2.2rem;height:2.2rem;border-radius:8px}
